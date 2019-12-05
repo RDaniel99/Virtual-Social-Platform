@@ -2,8 +2,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 CUser::CUser() {
     m_Name.clear();
-    m_Friends.clear();
-    m_Id = m_CountId++;
+    m_Id = 0;
 
     m_IsVisitor = true;
 }
@@ -22,9 +21,8 @@ string CUser::GetName() const {
     return m_Name;
 }
 //----------------------------------------------------------------------------------------------------------------------
-int CUser::Reset() {
+bool CUser::Reset(){
     m_Name.clear();
-    m_Friends.clear();
 
     m_IsVisitor = true;
 }

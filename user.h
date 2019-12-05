@@ -8,7 +8,7 @@ class CUser {
 
     public:
         CUser();
-        Reset();
+        bool Reset();
 
         string  GetName()   const;
         CId     GetId()     const;
@@ -24,10 +24,9 @@ class CUser {
         bool RemovePost(const CId& idPost);
 
     private:
-        CId             m_Id;
-        string          m_Name;
-        bool            m_IsVisitor;
-        /// To-Do: array of posts
+        CId     m_Id;
+        string  m_Name;
+        bool    m_IsVisitor;
 };
 
 
