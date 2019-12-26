@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <netdb.h>
 #include <cstring>
+#include "database.h"
 #include "text.h"
 
 using namespace std;
@@ -29,11 +30,11 @@ bool ExecuteCommand(int commandId, char* msg);
 
 int main()
 {
-    if((socketDescriptor = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-        perror("[SERVER] Eroare la socket()\n");
-        return -1;
-    }
+    if(!createDatabases())
+        S_DB_CREATE_ERROR
+
+    if((socketDescriptor = socket(AF_INET, SOCK_STREAM, 0)) == -1) 
+        S_SOCKET_ERROR
 
     bzero(&server, sizeof(server));
     bzero(&from, sizeof(from));
@@ -43,22 +44,13 @@ int main()
     server.sin_port = htons(PORT);
 
     if(bind(socketDescriptor, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1)
-    {
-        perror("[SERVER] Eroare la bind()\n");
-        return -1;
-    }
+        S_BIND_ERROR
 
     if(listen(socketDescriptor, 5) == -1)
-    {
-        perror("[SERVER] Eroare la listen()\n");
-        return -1;
-    }
+        S_LISTEN_ERROR
 
     if(signal(SIGCHLD, waitClosedChild) == SIG_ERR)
-    {
-        perror("[SERVER] Signal()\n");
-        return -1;
-    }
+        S_SIGNAL_ERROR
 
     printf("[SERVER] Asteptam la portul %d\n", PORT);
 
@@ -71,22 +63,16 @@ int main()
         client = accept(socketDescriptor, (struct sockaddr *)&from, &length);
 
         if(client < 0)
-        {
-            perror("[SERVER] Eroare la accept\n");
-            continue;
-        }
+            S_ACCEPT_ERROR
 
         pid_t pid = fork();
 
         if(pid == -1)
-        {
-            perror("[SERVER] Eroare la fork()\n");
-            return -1;
-        }
+            S_FORK_ERROR
 
         if(!pid)
         {
-            printf("[SERVER] A venit un client :D\n");
+            S_NEW_CLIENT
             while(1)
             {
                 bzero(msg, 100);
@@ -95,11 +81,7 @@ int main()
 
                 int commandId;
                 if(read(client, &commandId, 4) <= 0)
-                {
-                    perror("[SERVER] Eroare la read de la client\n");
-                    close(client);
-                    exit(0);
-                }
+                    S_READ_ERROR
 
                 printf("[SERVER] Mesajul a fost receptionat: %d\n", commandId);
 
@@ -121,9 +103,7 @@ bool ExecuteCommand(int commandId, char *msg)
     ConvertToMessage(static_cast<EMesaje>(commandId), msg);
 
     if(write(client, msg, 100) < 0)
-    {
-        S_WRITE_ERROR;
-    }
+        S_WRITE_ERROR
 
     if(commandId == 2)
     {

@@ -77,6 +77,9 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "quit\n") == 0)
         return 2;
 
+    if(strcmp(msg + 1, "register\n") == 0)
+        return 3;
+
     return 0;
 }
 
