@@ -20,8 +20,8 @@ using namespace std;
 
 struct sockaddr_in  server;
 struct sockaddr_in  from;
-char msg[100];
-char msgrasp[100] = " ";
+char msg[1000];
+char msgrasp[1000] = " ";
 int socketDescriptor;
 int client;
 
@@ -75,8 +75,8 @@ int main()
             S_NEW_CLIENT
             while(1)
             {
-                bzero(msg, 100);
-                bzero(msgrasp, 100);
+                bzero(msg, 1000);
+                bzero(msgrasp, 1000);
                 fflush(stdout);
 
                 int commandId;
@@ -102,49 +102,105 @@ bool ExecuteCommand(int commandId, char *msg)
 {
     int msgId = commandId;
 
-    if(commandId == 3)
+    if(commandId == 5)
+    {
+        int clientLoggedOut = -1;
+
+        if(read(client, &clientLoggedOut, 4) <= 0)
+            S_READ_ERROR
+        
+        if(updateOn(clientLoggedOut, 0))
+            msgId = 8;
+        else
+            msgId = 7;
+        
+        if(clientLoggedOut > -1)
+            S_LOGOUT
+    }
+
+    if(commandId == 3 || commandId == 4)
     {
         printf("[SERVER] Ok se cere nume\n");
-        // Registration command
+        // Registration command / Login command
         strcpy(msg, "");
-        strcpy(msg, T_REGISTER_NAME);
+        strcpy(msg, (commandId == 3 ? T_REGISTER_NAME : T_LOGIN_NAME));
 
-        if(write(client, msg, 100) < 0)
+        if(write(client, msg, 1000) < 0)
             S_WRITE_ERROR
 
-        char nume[100];
-        if(read(client, nume, 100) <= 0)
+        char nume[1000];
+        if(read(client, nume, 1000) <= 0)
             S_READ_ERROR
 
         strcpy(msg, "");
-        strcpy(msg, T_REGISTER_PASS);
+        strcpy(msg, (commandId == 3 ? T_REGISTER_PASS : T_LOGIN_PASS));
 
         printf("[SERVER] Ok se cere pass\n");
-        if(write(client, msg, 100) < 0)
+        if(write(client, msg, 1000) < 0)
             S_WRITE_ERROR
 
-        char pass[100];
-        if(read(client, pass, 100) <= 0)
+        char pass[1000];
+        if(read(client, pass, 1000) <= 0)
             S_READ_ERROR
 
         // Se elimina \n de la final
         nume[strlen(nume) - 1] = 0;
         pass[strlen(pass) - 1] = 0;
 
-        printf("[SERVER] Ok se inregistreaza...\n\n");
-        if(insertUser(nume, pass))
-            msgId = 4;
+        if(commandId == 3)
+            printf("[SERVER] Ok se inregistreaza...\n\n");
+        else
+            printf("[SERVER] Ok se logheaza...\n\n");
+        
+        if(commandId == 3)
+        {
+            if(insertUser(nume, pass))
+                msgId = 4;
+            else
+                msgId = 3;
+        }
+        else
+        {
+            if(loginUser(nume, pass))
+                msgId = 6;
+            else
+                msgId = 5;
+        } 
     }
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 100) < 0)
+    if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR
 
     if(commandId == 2)
     {
+        int clientLoggedOut = -1;
+
+        if(read(client, &clientLoggedOut, 4) <= 0)
+            S_READ_ERROR
+        
+        updateOn(clientLoggedOut, 0);
+
+        if(clientLoggedOut > -1)
+            S_LOGOUT
+
         close(client);
         exit(0);
+    }
+
+    if(commandId == 4)
+    {
+        int idToSend = (msgId == 6 ? getIdFromLastSelect() : -1);
+
+        if(idToSend > -1)
+            S_LOGGED
+        
+        if(write(client, &idToSend, 4) < 0)
+            S_WRITE_ERROR
+        
+        if(msgId == 6)
+            updateOn(idToSend, 1);
     }
 
     return true;

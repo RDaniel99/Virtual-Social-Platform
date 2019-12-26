@@ -9,7 +9,10 @@
 #define T_HELP \
 "Comenzi:\n \
 !help - Afiseaza acest mesaj.\n \
-!quit - Iesire.\n"
+!quit - Iesire.\n \
+!register - Inregistrare utilizator nou.\n \
+!login - Conectare.\n \
+!logout - Deconectare.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
@@ -25,6 +28,55 @@
 
 #define T_REGISTER_PASS \
 "Alegeti o parola: "
+
+#define T_LOGIN_NAME \
+"Nume: "
+
+#define T_LOGIN_PASS \
+"Password: "
+
+#define T_LOGIN_FAIL \
+"Login esuat. Utilizatorul nu exista sau parola este incorecta."
+
+#define T_LOGIN_SUCCES \
+"Login cu succes! Bine ati (re)venit!"
+
+#define T_LOGOUT_FAIL \
+"Logout esuat. Nu sunteti conectat."
+
+#define T_LOGOUT_SUCCES \
+"Logout cu succes."
+
+// Mesaje eroare/informare client
+#define C_WRITE_ERROR \
+{\
+perror("[CLIENT] Eroare la write()\n"); \
+exit(1);\
+}
+
+#define C_READ_ERROR \
+{\
+perror("[CLIENT] Eroare la read()\n"); \
+exit(1);\
+}
+
+#define C_CONNECT_ERROR \
+{\
+perror("[CLIENT] Eroare la connect()\n"); \
+exit(1);\
+}
+
+#define C_SYNTAX_ERROR \
+{\
+printf("[CLIENT] Sintaxa: %s <adresa_server> <port>\n", argv[0]);\
+return -1;\
+}
+
+#define C_SOCKET_ERROR \
+{\
+perror("[CLIENT] Eroare la socket\n");\
+return -1;\
+}
 
 // Mesaje eroare/informare server
 
@@ -83,8 +135,14 @@ perror("[SERVER] Eroare la createDatabases()\n");\
 exit(0);\
 }
 
+#define S_LOGGED \
+printf("[SERVER] Clientul cu ID = %d s-a conectat.\n", idToSend);
+
+#define S_LOGOUT \
+printf("[SERVER] Clientul cu ID = %d s-a deconectat.\n", clientLoggedOut);
+
 #define S_NEW_CLIENT \
-printf("Client nou conectat\n");
+printf("[SERVER] Client nou conectat\n");
 
 // Mesaje de eroare/informare DB
 
@@ -108,6 +166,9 @@ printf("[DATABASE] Eroare la inregistrarea userului\n");
 #define DB_SELECT_USER_ERROR \
 printf("[DATABASE] Eroare la Select() din Users\n");
 
+#define DB_UPDATE_USER_ERROR \
+printf("[DATABASE] Eroare la update in Users\n");
+
 #define DB_CREATE_USER_OK \
 printf("[DATABASE] Tabela user creata cu succes\n");
 
@@ -121,7 +182,11 @@ enum EMesaje
     EHelp,
     EQuit,
     ERegisterFail,
-    ERegisterSucces
+    ERegisterSucces,
+    ELoginFail,
+    ELoginSucces,
+    ELogoutFail,
+    ELogoutSucces
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);

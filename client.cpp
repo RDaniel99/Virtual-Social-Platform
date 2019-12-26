@@ -15,7 +15,8 @@ using namespace std;
 int port;
 int socketDescriptorToServer;
 struct sockaddr_in server;
-char msg[100];
+char msg[1000];
+int clientId = -1;
 
 int     GetCommand(char *msg);
 bool    ExecuteCommand(int commandId);
@@ -23,43 +24,29 @@ bool    ExecuteCommand(int commandId);
 int main(int argc, char **argv)
 {
     if(argc != 3)
-    {
-        printf("[CLIENT] Sintaxa: %s <adresa_server> <port>\n", argv[0]);
-        return -1;
-    }
+        C_SYNTAX_ERROR
 
     port = atoi(argv[2]);
 
     if((socketDescriptorToServer = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-        perror("[CLIENT] Eroare la socket\n");
-        return -1;
-    }
+        C_SOCKET_ERROR
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = inet_addr(argv[1]);
     server.sin_port = htons(port);
 
     if(connect(socketDescriptorToServer, (struct sockaddr *) &server, sizeof(struct sockaddr)) == -1)
-    {
-        perror("[CLIENT] Eroare la connect().\n");
-        return -1;
-    }
+        C_CONNECT_ERROR
 
     while(1)
     {
-        bzero(msg, 100);
+        bzero(msg, 1000);
         fflush(stdout);
 
-        read(0, msg, 100);
+        read(0, msg, 1000);
 
         int commandId = GetCommand(msg);
         bool ok = ExecuteCommand(commandId);
-        if(!ok)
-        {
-            perror("[CLIENT] Eroare la execute\n");
-            return -1;
-        }
     }
 }
 
@@ -80,49 +67,57 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "register\n") == 0)
         return 3;
 
+    if(strcmp(msg + 1, "login\n") == 0)
+        return 4;
+
+    if(strcmp(msg + 1, "logout\n") == 0)
+        return 5;
+
     return 0;
 }
 
 bool ExecuteCommand(int commandId)
 {
-    if(write(socketDescriptorToServer, &commandId, 4) <= 0)
+    if(write(socketDescriptorToServer, &commandId, 4) < 0)
+        C_WRITE_ERROR
+
+    if(commandId == 5 || commandId == 2)
     {
-        perror("[CLIENT] Eroare la write() catre server\n");
-        exit(1);
+        if(write(socketDescriptorToServer, &clientId, 4) < 0)
+            C_WRITE_ERROR
+
+        clientId = -1;
     }
 
-    if(commandId == 3)
+    if(commandId == 3 || commandId == 4)
     {
-        // Registration
+        // Registration / Login
 
         // Mesaj cu Name:
-        bzero(msg, 100);
-        read(socketDescriptorToServer, msg, 100);
-        write(0, msg, 100);
+        bzero(msg, 1000);
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
+        if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
 
         fflush(stdout);
         // Transmitere nume
-        bzero(msg, 100);
-        read(0, msg, 100);
-        write(socketDescriptorToServer, msg, 100);
+        bzero(msg, 1000);
+        if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
+        if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
 
         // Mesaj cu Pass
-        bzero(msg, 100);
-        read(socketDescriptorToServer, msg, 100);
-        write(0, msg, 100);
+        bzero(msg, 1000);
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
+        if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
 
         fflush(stdout);
         // Transmitere Pass
-        bzero(msg, 100);
-        read(0, msg, 100);
-        write(socketDescriptorToServer, msg, 100);
+        bzero(msg, 1000);
+        if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
+        if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
     }
 
-    if(read(socketDescriptorToServer, msg, 100) < 0)
-    {
-        perror("[CLIENT] Eroare la read() de la server\n");
-        exit(1);
-    }
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
 
     printf("%s\n", msg);
 
@@ -130,6 +125,12 @@ bool ExecuteCommand(int commandId)
     {
         close(socketDescriptorToServer);
         exit(0);
+    }
+
+    if(commandId == 4)
+    {
+        if(read(socketDescriptorToServer, &clientId, 4) < 0)
+            C_READ_ERROR
     }
 
     return 1;
