@@ -14,6 +14,18 @@
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
 
+#define T_REGISTER_FAIL \
+"Inregistrare esuata: Date gresite\n"
+
+#define T_REGISTER_SUCCES \
+"Inregistrare cu succes. Te poti loga!\n"
+
+#define T_REGISTER_NAME \
+"Alegeti un nume: "
+
+#define T_REGISTER_PASS \
+"Alegeti o parola: "
+
 // Mesaje eroare/informare server
 
 #define S_WRITE_ERROR \
@@ -90,14 +102,26 @@ sqlite3_close(db);\
 return false;\
 }
 
+#define DB_INSERT_USER_ERROR \
+printf("[DATABASE] Eroare la inregistrarea userului\n");
+
+#define DB_SELECT_USER_ERROR \
+printf("[DATABASE] Eroare la Select() din Users\n");
+
 #define DB_CREATE_USER_OK \
 printf("[DATABASE] Tabela user creata cu succes\n");
+
+#define DB_INSERT_USER_OK \
+printf("[DATABASE] Userul %s cu parola %s s-a inregistrat cu succes in tabela Users\n", nume, pass);\
+printf("[DATABASE] User Id = %d\n", db_nextId);
 
 enum EMesaje
 {
     EUnknown = 0,
     EHelp,
     EQuit,
+    ERegisterFail,
+    ERegisterSucces
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);

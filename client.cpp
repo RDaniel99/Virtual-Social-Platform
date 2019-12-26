@@ -91,6 +91,33 @@ bool ExecuteCommand(int commandId)
         exit(1);
     }
 
+    if(commandId == 3)
+    {
+        // Registration
+
+        // Mesaj cu Name:
+        bzero(msg, 100);
+        read(socketDescriptorToServer, msg, 100);
+        write(0, msg, 100);
+
+        fflush(stdout);
+        // Transmitere nume
+        bzero(msg, 100);
+        read(0, msg, 100);
+        write(socketDescriptorToServer, msg, 100);
+
+        // Mesaj cu Pass
+        bzero(msg, 100);
+        read(socketDescriptorToServer, msg, 100);
+        write(0, msg, 100);
+
+        fflush(stdout);
+        // Transmitere Pass
+        bzero(msg, 100);
+        read(0, msg, 100);
+        write(socketDescriptorToServer, msg, 100);
+    }
+
     if(read(socketDescriptorToServer, msg, 100) < 0)
     {
         perror("[CLIENT] Eroare la read() de la server\n");

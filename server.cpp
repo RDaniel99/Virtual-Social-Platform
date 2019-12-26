@@ -100,7 +100,43 @@ void waitClosedChild(int sig)
 
 bool ExecuteCommand(int commandId, char *msg)
 {
-    ConvertToMessage(static_cast<EMesaje>(commandId), msg);
+    int msgId = commandId;
+
+    if(commandId == 3)
+    {
+        printf("[SERVER] Ok se cere nume\n");
+        // Registration command
+        strcpy(msg, "");
+        strcpy(msg, T_REGISTER_NAME);
+
+        if(write(client, msg, 100) < 0)
+            S_WRITE_ERROR
+
+        char nume[100];
+        if(read(client, nume, 100) <= 0)
+            S_READ_ERROR
+
+        strcpy(msg, "");
+        strcpy(msg, T_REGISTER_PASS);
+
+        printf("[SERVER] Ok se cere pass\n");
+        if(write(client, msg, 100) < 0)
+            S_WRITE_ERROR
+
+        char pass[100];
+        if(read(client, pass, 100) <= 0)
+            S_READ_ERROR
+
+        // Se elimina \n de la final
+        nume[strlen(nume) - 1] = 0;
+        pass[strlen(pass) - 1] = 0;
+
+        printf("[SERVER] Ok se inregistreaza...\n\n");
+        if(insertUser(nume, pass))
+            msgId = 4;
+    }
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
     if(write(client, msg, 100) < 0)
         S_WRITE_ERROR
