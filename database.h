@@ -3,7 +3,8 @@
 
 #include <set>
 
-bool createDatabaseUser();
+bool createDatabasePosts();
+bool createDatabaseUsers();
 bool createDatabases();
 
 bool validateName(char *nume);
@@ -13,8 +14,11 @@ bool insertUser(char *nume, char* pass, int isAdmin = 0);
 bool loginUser(char *nume, char* pass);
 bool updateOn(int userid, int value);
 
+bool existsId(int id, int tabel);
+int computeNextId(int tabel);
 int getIdFromLastSelect();
 bool existsName(char *nume);
-int callbackCheckIfNameExists(void *, int, char **, char **);
+int callbackCheckIfExists(void *, int, char **, char **);
+int callbackGetMaxId(void *, int, char **, char **);
 
 #endif //H_DATABASE

@@ -30,7 +30,7 @@
 "Alegeti un nume: "
 
 #define T_REGISTER_PASS \
-"Alegeti o parola: "
+"Alegeti o parola (minim 4 caractere): "
 
 #define T_LOGIN_NAME \
 "Nume: "
@@ -173,11 +173,30 @@ printf("[DATABASE] Eroare la Select() din Users\n");
 printf("[DATABASE] Eroare la update in Users\n");
 
 #define DB_CREATE_USER_OK \
-printf("[DATABASE] Tabela user creata cu succes\n");
+printf("[DATABASE] Tabela Users creata cu succes\n");
 
 #define DB_INSERT_USER_OK \
 printf("[DATABASE] Userul %s cu parola %s s-a inregistrat cu succes in tabela Users\n", nume, pass);\
 printf("[DATABASE] User Id = %d\n", db_nextId);
+
+#define DB_CREATE_POST_ERROR \
+{\
+printf("[DATABASE] Eroare la create table - tabela Posts\n %s\n", err);\
+sqlite3_free(err);\
+sqlite3_close(db);\
+}
+
+#define DB_SELECT_POSTS_ERROR \
+printf("[DATABASE] Eroare la Select() din Posts\n");
+
+#define DB_OPEN_POSTS_ERROR \
+{\
+printf("[DATABASE] Eroare la open() - tabela Posts");\
+return false;\
+}
+
+#define DB_CREATE_POSTS_OK \
+printf("[DATABASE] Tabela Posts creata cu succes\n");
 
 #define DB_SQL_COMMAND \
 printf("[DATABASE] SQL Command: %s\n", sql.c_str());

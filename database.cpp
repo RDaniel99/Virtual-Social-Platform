@@ -9,34 +9,67 @@
 
 using namespace std;
 
-set<int>    db_usersIds;
-int         db_nextId;
 int         db_callbackAns;
 int         db_id;
 string      db_username;
 string      db_password;
 
-bool createDatabaseUser()
+bool createDatabasePosts()
 {
     sqlite3* db;
     int exitCode = 0;
     char *err;
 
-    exitCode = sqlite3_open("users.db", &db);
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_POSTS_ERROR
+
+    // Visibility - 0 (private) / 1 (public)
+
+    char const *sql =   "DROP TABLE IF EXISTS Posts;" 
+                        "CREATE TABLE Posts(PostId INT, PostText TEXT, OwnerId INT, PostVisibility INT);" 
+                        "INSERT INTO Posts VALUES(1, 'Postare Cosmin', 2, 1);" 
+                        "INSERT INTO Posts VALUES(2, 'Postare Cosmin', 2, 0);" 
+                        "INSERT INTO Posts VALUES(3, 'Postare Andrei', 1, 0);" 
+                        "INSERT INTO Posts VALUES(4, 'Postare Georgiana', 8, 1);" 
+                        "INSERT INTO Posts VALUES(5, 'Postare Razvan', 7, 0);" 
+                        "INSERT INTO Posts VALUES(6, 'Postare Cosmin', 2, 0);" 
+                        "INSERT INTO Posts VALUES(7, 'Postare Andrei', 1, 1);";
+        
+    exitCode = sqlite3_exec(db, sql, 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_CREATE_POST_ERROR
+
+    sqlite3_close(db);
+
+    DB_CREATE_POSTS_OK
+
+    return true;
+}
+
+bool createDatabaseUsers()
+{
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
 
     if(exitCode != SQLITE_OK)
         DB_OPEN_USER_ERROR
 
     char const *sql =   "DROP TABLE IF EXISTS Users;" 
                         "CREATE TABLE Users(UserId INT, UserName TEXT, UserPass TEXT, UserAdmin INT, UserOnline INT);" 
-                        "INSERT INTO Users VALUES(1, 'Audi', 'pass', 1, 0);" 
-                        "INSERT INTO Users VALUES(2, 'Mercedes', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(3, 'Skoda', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(4, 'Volvo', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(5, 'Bentley', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(6, 'Citroen', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(7, 'Hummer', 'pass', 0, 0);"
-                        "INSERT INTO Users VALUES(8, 'Volkswagen', 'pass', 0, 0);";
+                        "INSERT INTO Users VALUES(1, 'Andrei', 'pass', 1, 0);" 
+                        "INSERT INTO Users VALUES(2, 'Cosmin', 'pass', 0, 0);" 
+                        "INSERT INTO Users VALUES(3, 'Ion', 'pass', 0, 0);" 
+                        "INSERT INTO Users VALUES(4, 'Ana', 'pass', 0, 0);" 
+                        "INSERT INTO Users VALUES(5, 'Maria', 'pass', 0, 0);" 
+                        "INSERT INTO Users VALUES(6, 'Radu', 'pass', 0, 0);" 
+                        "INSERT INTO Users VALUES(7, 'Razvan', 'pass', 0, 0);"
+                        "INSERT INTO Users VALUES(8, 'Georgiana', 'pass', 0, 0);";
         
     exitCode = sqlite3_exec(db, sql, 0, 0, &err);
 
@@ -47,11 +80,6 @@ bool createDatabaseUser()
 
     DB_CREATE_USER_OK
 
-    for(int i = 1; i <= 8; i++)
-        db_usersIds.insert(i);
-
-    db_nextId = 9;
-
     return true;
 }
 
@@ -59,7 +87,8 @@ bool createDatabases()
 {
     bool ok = true;
 
-    ok = ok & createDatabaseUser();
+    ok = ok & createDatabaseUsers();
+    ok = ok & createDatabasePosts();
 
     return ok;
 }
@@ -74,6 +103,8 @@ bool insertUser(char *nume, char* pass, int isAdmin)
 
     if(!ok)
         return false;
+
+    int db_nextId = computeNextId(1);
 
     string sql = "";
     sql += "INSERT INTO Users VALUES(";
@@ -92,7 +123,7 @@ bool insertUser(char *nume, char* pass, int isAdmin)
     int exitCode = 0;
     char *err;
 
-    exitCode = sqlite3_open("users.db", &db);
+    exitCode = sqlite3_open("mydatabase.db", &db);
 
     if(exitCode != SQLITE_OK)
         DB_OPEN_USER_ERROR
@@ -105,8 +136,6 @@ bool insertUser(char *nume, char* pass, int isAdmin)
     sqlite3_close(db);
 
     DB_INSERT_USER_OK
-    db_usersIds.insert(db_nextId);
-    db_nextId++;
 
     return true;
 }
@@ -132,9 +161,115 @@ int getIdFromLastSelect()
     return db_id;
 }
 
+int computeNextId(int tabel)
+{
+    db_callbackAns = 0;
+
+    string table = "";
+
+    if(tabel == 1) table += "Users";
+    if(tabel == 2) table += "Posts";
+
+    string idName = "";
+
+    if(tabel == 1) idName += "UserId";
+    if(tabel == 2) idName += "PostId";
+
+    string sql = "";
+    sql += "SELECT MAX(";
+    sql += idName;
+    sql += ") FROM ";
+    sql += table;
+    sql += ";";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+    {
+        if(tabel == 1)
+            DB_OPEN_USER_ERROR
+        if(tabel == 2)
+            DB_OPEN_POSTS_ERROR
+    }
+
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackGetMaxId, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+    {
+        if(tabel == 1)
+            DB_SELECT_USER_ERROR
+        if(tabel == 2)
+            DB_SELECT_POSTS_ERROR
+    }
+
+    sqlite3_close(db);
+
+    return 1 + db_callbackAns;
+}
+
+bool existsId(int id, int tabel)
+{
+    db_callbackAns = 0;
+
+    string table = "";
+
+    if(tabel == 1) table += " Users ";
+    if(tabel == 2) table += " Posts ";
+
+    string idName = "";
+
+    if(tabel == 1) idName += " UserId ";
+    if(tabel == 2) idName += " PostId ";
+
+    string sql = "";
+    sql += "SELECT * FROM";
+    sql += table;
+    sql += "WHERE";
+    sql += idName;
+    sql += "= ";
+    sql += std::to_string(id);
+    sql += ";";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+    {
+        if(tabel == 1)
+            DB_OPEN_USER_ERROR
+        if(tabel == 2)
+            DB_OPEN_POSTS_ERROR
+    }
+
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCheckIfExists, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+    {
+        if(tabel == 1)
+            DB_SELECT_USER_ERROR
+        if(tabel == 2)
+            DB_SELECT_POSTS_ERROR
+    }
+
+    sqlite3_close(db);
+
+    return (db_callbackAns == 1);
+}
+
 bool updateOn(int userid, int value)
 {
-    if(db_usersIds.find(userid) == db_usersIds.end())
+    if(!existsId(userid, 1))
         return false;
 
     string sql = "";
@@ -150,7 +285,7 @@ bool updateOn(int userid, int value)
     int exitCode = 0;
     char *err;
 
-    exitCode = sqlite3_open("users.db", &db);
+    exitCode = sqlite3_open("mydatabase.db", &db);
 
     if(exitCode != SQLITE_OK)
         DB_OPEN_USER_ERROR
@@ -181,12 +316,12 @@ bool existsName(char *nume)
     int exitCode = 0;
     char *err;
 
-    exitCode = sqlite3_open("users.db", &db);
+    exitCode = sqlite3_open("mydatabase.db", &db);
 
     if(exitCode != SQLITE_OK)
         DB_OPEN_USER_ERROR
 
-    exitCode = sqlite3_exec(db, sql.c_str(), callbackCheckIfNameExists, 0, &err);
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCheckIfExists, 0, &err);
 
     if(exitCode != SQLITE_OK)
         DB_SELECT_USER_ERROR
@@ -220,7 +355,7 @@ bool validateAdmin(int isAdmin)
     return true;
 }
 
-int callbackCheckIfNameExists(void *NotUsed, int argc, char **argv, 
+int callbackCheckIfExists(void *NotUsed, int argc, char **argv, 
                     char **azColName) {
     
     NotUsed = 0;
@@ -235,6 +370,21 @@ int callbackCheckIfNameExists(void *NotUsed, int argc, char **argv,
         db_id = atoi(argv[0]);
         db_username += argv[1];
         db_password += argv[2];
+    }
+
+    return 0;
+}
+
+int callbackGetMaxId(void *NotUsed, int argc, char **argv, 
+                    char **azColName) {
+    
+    NotUsed = 0;
+
+    printf("argc = %d\n\n", argc);
+
+    if(argc)
+    {
+        db_callbackAns = atoi(argv[0]);
     }
 
     return 0;
