@@ -21,6 +21,13 @@ int clientId = -1;
 int     GetCommand(char *msg);
 bool    ExecuteCommand(int commandId);
 
+bool UnknownCommand();  // commandId = 0
+bool HelpCommand();     // commandId = 1
+bool QuitCommand();     // commandId = 2
+bool RegisterCommand(); // commandId = 3
+bool LoginCommand();    // commandId = 4
+bool LogoutCommand();   // commandId = 5
+
 int main(int argc, char **argv)
 {
     if(argc != 3)
@@ -58,20 +65,11 @@ int GetCommand(char *msg)
     if(msg[0] != '!')
         return 0;
 
-    if(strcmp(msg + 1, "help\n") == 0)
-        return 1;
-
-    if(strcmp(msg + 1, "quit\n") == 0)
-        return 2;
-
-    if(strcmp(msg + 1, "register\n") == 0)
-        return 3;
-
-    if(strcmp(msg + 1, "login\n") == 0)
-        return 4;
-
-    if(strcmp(msg + 1, "logout\n") == 0)
-        return 5;
+    if(strcmp(msg + 1, "help\n") == 0)          return 1;
+    if(strcmp(msg + 1, "quit\n") == 0)          return 2;
+    if(strcmp(msg + 1, "register\n") == 0)      return 3;
+    if(strcmp(msg + 1, "login\n") == 0)         return 4;
+    if(strcmp(msg + 1, "logout\n") == 0)        return 5;
 
     return 0;
 }
@@ -81,57 +79,149 @@ bool ExecuteCommand(int commandId)
     if(write(socketDescriptorToServer, &commandId, 4) < 0)
         C_WRITE_ERROR
 
-    if(commandId == 5 || commandId == 2)
+    switch(commandId)
     {
-        if(write(socketDescriptorToServer, &clientId, 4) < 0)
-            C_WRITE_ERROR
-
-        clientId = -1;
+        case ECUnknown:     return UnknownCommand();
+        case ECHelp:        return HelpCommand();
+        case ECQuit:        return QuitCommand();
+        case ECRegister:    return RegisterCommand();
+        case ECLogin:       return LoginCommand();
+        case ECLogout:      return LogoutCommand();
     }
 
-    if(commandId == 3 || commandId == 4)
-    {
-        // Registration / Login
+    return false;
+}
 
-        // Mesaj cu Name:
-        bzero(msg, 1000);
-        if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
-        if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
+bool UnknownCommand()
+{
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
 
-        fflush(stdout);
-        // Transmitere nume
-        bzero(msg, 1000);
-        if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
-        if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
+    printf("%s\n", msg);
+}
 
-        // Mesaj cu Pass
-        bzero(msg, 1000);
-        if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
-        if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
+bool HelpCommand()
+{
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
 
-        fflush(stdout);
-        // Transmitere Pass
-        bzero(msg, 1000);
-        if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
-        if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
-    }
+    printf("%s\n", msg);
+}
+
+bool QuitCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    clientId = -1;
 
     if(read(socketDescriptorToServer, msg, 1000) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
 
-    if(commandId == 2)
+    close(socketDescriptorToServer);
+    exit(0);
+}
+
+bool RegisterCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) <= 0)  C_WRITE_ERROR
+
+    int testIdResult = -1;
+
+    if(read(socketDescriptorToServer, &testIdResult, 4) <= 0) C_READ_ERROR
+    if(testIdResult == 0)
     {
-        close(socketDescriptorToServer);
-        exit(0);
+        if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+        if(write(0, msg, 1000) <= 0)                        C_WRITE_ERROR
+
+        return 0;
     }
 
-    if(commandId == 4)
+    // Mesaj cu nume
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
+
+    fflush(stdout);
+    // Transmitere nume
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
+
+    // Mesaj cu Pass
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
+
+    fflush(stdout);
+    // Transmitere Pass
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
+
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
+
+    printf("%s\n", msg);
+}
+
+bool LoginCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) <= 0)  C_WRITE_ERROR
+
+    int testIdResult = -1;
+
+    if(read(socketDescriptorToServer, &testIdResult, 4) <= 0) C_READ_ERROR
+    if(testIdResult == 0)
     {
-        if(read(socketDescriptorToServer, &clientId, 4) < 0)
-            C_READ_ERROR
+        if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+        if(write(0, msg, 1000) <= 0)                        C_WRITE_ERROR
+
+        return 0;
     }
 
-    return 1;
+    // Mesaj cu nume
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
+
+    fflush(stdout);
+    // Transmitere nume
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
+
+    // Mesaj cu Pass
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) <= 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
+
+    fflush(stdout);
+    // Transmitere Pass
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
+
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
+
+    printf("%s\n", msg);
+
+    if(read(socketDescriptorToServer, &clientId, 4) < 0)
+        C_READ_ERROR
+} 
+
+bool LogoutCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    clientId = -1;
+
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
+
+    printf("%s\n", msg);
 }

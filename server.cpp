@@ -26,7 +26,14 @@ int socketDescriptor;
 int client;
 
 void waitClosedChild(int sig);
-bool ExecuteCommand(int commandId, char* msg);
+bool ExecuteCommand(int commandId);
+
+bool UnknownCommand();  // commandId = 0
+bool HelpCommand();     // commandId = 1
+bool QuitCommand();     // commandId = 2
+bool RegisterCommand(); // commandId = 3
+bool LoginCommand();    // commandId = 4
+bool LogoutCommand();   // commandId = 5
 
 int main()
 {
@@ -85,7 +92,7 @@ int main()
 
                 printf("[SERVER] Mesajul a fost receptionat: %d\n", commandId);
 
-                bool ok = ExecuteCommand(commandId, msgrasp);
+                bool ok = ExecuteCommand(commandId);
             }
         }
     }
@@ -98,110 +105,222 @@ void waitClosedChild(int sig)
     wait(NULL);
 }
 
-bool ExecuteCommand(int commandId, char *msg)
+bool ExecuteCommand(int commandId)
 {
-    int msgId = commandId;
-
-    if(commandId == 5)
+    switch(commandId)
     {
-        int clientLoggedOut = -1;
-
-        if(read(client, &clientLoggedOut, 4) <= 0)
-            S_READ_ERROR
-        
-        if(updateOn(clientLoggedOut, 0))
-            msgId = 8;
-        else
-            msgId = 7;
-        
-        if(clientLoggedOut > -1)
-            S_LOGOUT
+        case ECUnknown:     return UnknownCommand();
+        case ECHelp:        return HelpCommand();
+        case ECQuit:        return QuitCommand();
+        case ECRegister:    return RegisterCommand();
+        case ECLogin:       return LoginCommand();
+        case ECLogout:      return LogoutCommand();
     }
 
-    if(commandId == 3 || commandId == 4)
-    {
-        printf("[SERVER] Ok se cere nume\n");
-        // Registration command / Login command
-        strcpy(msg, "");
-        strcpy(msg, (commandId == 3 ? T_REGISTER_NAME : T_LOGIN_NAME));
+    return false;
+}
 
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
-        char nume[1000];
-        if(read(client, nume, 1000) <= 0)
-            S_READ_ERROR
-
-        strcpy(msg, "");
-        strcpy(msg, (commandId == 3 ? T_REGISTER_PASS : T_LOGIN_PASS));
-
-        printf("[SERVER] Ok se cere pass\n");
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
-        char pass[1000];
-        if(read(client, pass, 1000) <= 0)
-            S_READ_ERROR
-
-        // Se elimina \n de la final
-        nume[strlen(nume) - 1] = 0;
-        pass[strlen(pass) - 1] = 0;
-
-        if(commandId == 3)
-            printf("[SERVER] Ok se inregistreaza...\n\n");
-        else
-            printf("[SERVER] Ok se logheaza...\n\n");
-        
-        if(commandId == 3)
-        {
-            if(insertUser(nume, pass))
-                msgId = 4;
-            else
-                msgId = 3;
-        }
-        else
-        {
-            if(loginUser(nume, pass))
-                msgId = 6;
-            else
-                msgId = 5;
-        } 
-    }
+bool UnknownCommand()
+{
+    int msgId = 0;
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
     if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR
 
-    if(commandId == 2)
-    {
-        int clientLoggedOut = -1;
+    return true;
+}
 
-        if(read(client, &clientLoggedOut, 4) <= 0)
-            S_READ_ERROR
-        
-        updateOn(clientLoggedOut, 0);
+bool HelpCommand()
+{
+    int msgId = 1;
 
-        if(clientLoggedOut > -1)
-            S_LOGOUT
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-        close(client);
-        exit(0);
-    }
-
-    if(commandId == 4)
-    {
-        int idToSend = (msgId == 6 ? getIdFromLastSelect() : -1);
-
-        if(idToSend > -1)
-            S_LOGGED
-        
-        if(write(client, &idToSend, 4) < 0)
-            S_WRITE_ERROR
-        
-        if(msgId == 6)
-            updateOn(idToSend, 1);
-    }
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
 
     return true;
+}
+
+bool QuitCommand()
+{
+    int msgId = 2;
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    int clientLoggedOut = -1;
+
+    if(read(client, &clientLoggedOut, 4) <= 0)
+        S_READ_ERROR
+    
+    updateOn(clientLoggedOut, 0);
+
+    if(clientLoggedOut > -1)
+        S_LOGOUT
+
+    close(client);
+    exit(0);
+}
+
+bool RegisterCommand()
+{
+    int msgId = -1;
+    int tempId = -1;
+
+    if(read(client, &tempId, 4) <= 0)
+        S_READ_ERROR
+
+    int testIdResult = 0;
+    if(tempId == -1)
+        testIdResult = 1;
+    
+    if(write(client, &testIdResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testIdResult == 0)
+    {
+        strcpy(msg, "");
+        strcpy(msg, T_USER_ALREADY_LOGGED);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+    
+    strcpy(msg, "");
+    strcpy(msg, T_REGISTER_NAME);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char nume[1000];
+    if(read(client, nume, 1000) <= 0)
+        S_READ_ERROR
+
+    strcpy(msg, "");
+    strcpy(msg, T_REGISTER_PASS);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char pass[1000];
+    if(read(client, pass, 1000) <= 0)
+        S_READ_ERROR
+
+    // Se elimina \n de la final
+    nume[strlen(nume) - 1] = 0;
+    pass[strlen(pass) - 1] = 0;
+        
+    if(insertUser(nume, pass))
+        msgId = 4;
+    else
+        msgId = 3;
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+}
+
+bool LoginCommand()
+{
+    int msgId = -1;
+    int tempId = -1;
+
+    if(read(client, &tempId, 4) <= 0)
+        S_READ_ERROR
+
+    int testIdResult = 0;
+    if(tempId == -1)
+        testIdResult = 1;
+    
+    if(write(client, &testIdResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testIdResult == 0)
+    {
+        strcpy(msg, "");
+        strcpy(msg, T_USER_ALREADY_LOGGED);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+    
+    strcpy(msg, "");
+    strcpy(msg, T_LOGIN_NAME);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char nume[1000];
+    if(read(client, nume, 1000) <= 0)
+        S_READ_ERROR
+
+    strcpy(msg, "");
+    strcpy(msg, T_LOGIN_PASS);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char pass[1000];
+    if(read(client, pass, 1000) <= 0)
+        S_READ_ERROR
+
+    // Se elimina \n de la final
+    nume[strlen(nume) - 1] = 0;
+    pass[strlen(pass) - 1] = 0;
+        
+    if(loginUser(nume, pass))
+        msgId = 6;
+    else
+        msgId = 5;
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    int idToSend = (msgId == 6 ? getIdFromLastSelect() : -1);
+
+    if(idToSend > -1)
+        S_LOGGED
+        
+    if(write(client, &idToSend, 4) < 0)
+        S_WRITE_ERROR
+        
+    if(msgId == 6)
+        updateOn(idToSend, 1);
+
+    return true;
+}
+
+bool LogoutCommand()
+{
+    int msgId = -1;
+
+    int clientLoggedOut = -1;
+
+    if(read(client, &clientLoggedOut, 4) <= 0)
+        S_READ_ERROR
+        
+    if(updateOn(clientLoggedOut, 0))
+        msgId = 8;
+    else
+        msgId = 7;
+        
+    if(clientLoggedOut > -1)
+        S_LOGOUT
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
 }

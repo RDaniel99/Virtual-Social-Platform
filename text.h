@@ -17,6 +17,9 @@
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
 
+#define T_USER_ALREADY_LOGGED \
+"Sunteti deja conectat!\n"
+
 #define T_REGISTER_FAIL \
 "Inregistrare esuata: Date gresite\n"
 
@@ -176,17 +179,30 @@ printf("[DATABASE] Tabela user creata cu succes\n");
 printf("[DATABASE] Userul %s cu parola %s s-a inregistrat cu succes in tabela Users\n", nume, pass);\
 printf("[DATABASE] User Id = %d\n", db_nextId);
 
+#define DB_SQL_COMMAND \
+printf("[DATABASE] SQL Command: %s\n", sql.c_str());
+
 enum EMesaje
 {
-    EUnknown = 0,
-    EHelp,
-    EQuit,
-    ERegisterFail,
-    ERegisterSucces,
-    ELoginFail,
-    ELoginSucces,
-    ELogoutFail,
-    ELogoutSucces
+    EMUnknown = 0,
+    EMHelp,
+    EMQuit,
+    EMRegisterFail,
+    EMRegisterSucces,
+    EMLoginFail,
+    EMLoginSucces,
+    EMLogoutFail,
+    EMLogoutSucces
+};
+
+enum EComenzi
+{
+    ECUnknown = 0,
+    ECHelp,
+    ECQuit,
+    ECRegister,
+    ECLogin,
+    ECLogout
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);

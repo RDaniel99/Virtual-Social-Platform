@@ -86,7 +86,7 @@ bool insertUser(char *nume, char* pass, int isAdmin)
     sql += (isAdmin ? '1' : '0');
     sql += ", 0);";
     
-    printf("SQL Command: %s\n", sql.c_str());
+    DB_SQL_COMMAND
 
     sqlite3* db;
     int exitCode = 0;
@@ -144,7 +144,7 @@ bool updateOn(int userid, int value)
     sql += std::to_string(userid);
     sql += ';';
 
-    printf("SQL Command: %s\n", sql.c_str());
+    DB_SQL_COMMAND
 
     sqlite3* db;
     int exitCode = 0;
@@ -175,7 +175,7 @@ bool existsName(char *nume)
     sql += nume;
     sql += "';";
 
-    printf("SQL Command: %s\n", sql.c_str());
+    DB_SQL_COMMAND
 
     sqlite3* db;
     int exitCode = 0;
