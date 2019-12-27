@@ -5,6 +5,7 @@
 
 bool createDatabasePosts();
 bool createDatabaseUsers();
+bool createDatabaseFriendships();
 bool createDatabases();
 
 bool validateName(char *nume);
@@ -21,10 +22,15 @@ int getIdFromLastSelect();
 bool existsName(char *nume);
 bool isPostValid(char *authorid, char *visibility);
 bool isUserAdmin(int userid);
-bool areFriends(int id1, int id2);
+bool areFriends(int id1, int id2, int accepted);
+bool validatePostText(char *postText);
+bool validateOwnerId(int ownerid);
+bool validateVisibility(int visibility);
+bool addPost(char *postText, int ownerid, int visibility);
 
 int callbackCheckIfExists(void *, int, char **, char **);
 int callbackGetMaxId(void *, int, char **, char **);
 int callbackCollectPosts(void *, int, char **, char **);
+int callbackAreInFriends(void *, int, char **, char **);
 
 #endif //H_DATABASE

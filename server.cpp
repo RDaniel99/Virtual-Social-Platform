@@ -1,5 +1,7 @@
 #pragma comment(lib,"Ws2_32.lib")
 
+#define H_SERVER
+
 #include <iostream>
 #include <cstdio>
 #include <sys/types.h>
@@ -31,11 +33,11 @@ bool ExecuteCommand(int commandId);
 bool UnknownCommand();              // commandId = 0
 bool HelpCommand();                 // commandId = 1
 bool QuitCommand();                 // commandId = 2
-bool RegisterCommand(int isAdmin);  // commandId = 3
+bool RegisterCommand(int isAdmin);  // commandId = 3 sau 7
 bool LoginCommand();                // commandId = 4
 bool LogoutCommand();               // commandId = 5
-bool ShowPostsCommand();            // commandId = 6;
-
+bool ShowPostsCommand();            // commandId = 6
+bool AddPostCommand();              // commandId = 8
 
 int main()
 {
@@ -85,7 +87,6 @@ int main()
             while(1)
             {
                 bzero(msg, 1000);
-                bzero(msgrasp, 1000);
                 fflush(stdout);
 
                 int commandId;
@@ -119,6 +120,7 @@ bool ExecuteCommand(int commandId)
         case ECLogout:      return LogoutCommand();
         case ECShowPosts:   return ShowPostsCommand();
         case ECRegisterA:   return RegisterCommand(1);
+        case ECAddPost:     return AddPostCommand();
     }
 
     return false;
@@ -166,6 +168,8 @@ bool QuitCommand()
 
     if(clientLoggedOut > -1)
         S_LOGOUT
+
+    S_QUIT_CLIENT
 
     close(client);
     exit(0);
@@ -350,6 +354,75 @@ bool ShowPostsCommand()
 
     if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR
+
+    return true;
+}
+
+bool AddPostCommand()
+{
+    int msgId = 9;
+
+    int clientId = - 1;
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    int testResult = 1;
+
+    if(clientId == -1)
+        testResult = 0;
+        
+    if(write(client, &testResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testResult == 0)
+    {
+        strcpy(msg, "");
+        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+
+    strcpy(msg, "");
+    strcpy(msg, T_POST_TEXT);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char textPostare[1000];
+    if(read(client, textPostare, 1000) < 0)
+        S_READ_ERROR
+
+    textPostare[strlen(textPostare) - 1] = 0;
+    printf("S-a citit: %s\n", textPostare);
+
+    strcpy(msg, "");
+    strcpy(msg, T_POST_VISIBILITY);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    int visibility;
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+
+    visibility = atoi(msg);
+
+    printf("ce mortii ei: %d\n", visibility);
+
+    if(addPost(textPostare, clientId, visibility))
+        msgId = 10;
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    if(msgId == 10)
+        S_NEW_POST
 
     return true;
 }

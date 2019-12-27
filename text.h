@@ -1,19 +1,53 @@
 #ifndef H_TEXT
 #define H_TEXT
 
+enum EMesaje
+{
+    EMUnknown = 0,
+    EMHelp,
+    EMQuit,
+    EMRegisterFail,
+    EMRegisterSucces,
+    EMLoginFail,
+    EMLoginSucces,
+    EMLogoutFail,
+    EMLogoutSucces,
+    EMAddPostFail,
+    EMAddPostSucces
+};
+
+enum EComenzi
+{
+    ECUnknown = 0,
+    ECHelp,
+    ECQuit,
+    ECRegister,
+    ECLogin,
+    ECLogout,
+    ECShowPosts,
+    ECRegisterA,
+    ECAddPost
+};
+
+void ConvertToMessage(EMesaje mesaj, char *result);
+
+
 // Mesaje intre server-client
+
+#ifdef H_SERVER
 
 #define T_UNKNOWN_MESSAGE \
 "Mesaj necunoscut\n"
 
 #define T_HELP \
 "Comenzi:\n \
-!help - Afiseaza acest mesaj.\n \
-!quit - Iesire.\n \
-!register - Inregistrare utilizator nou.\n \
-!login - Conectare.\n \
-!logout - Deconectare.\n \
-!showposts - Afiseaza postarile din newsfeed.\n"
+!help       - Afiseaza acest mesaj.\n \
+!quit       - Iesire.\n \
+!register   - Inregistrare utilizator nou.\n \
+!login      - Conectare.\n \
+!logout     - Deconectare.\n \
+!showposts  - Afiseaza postarile din newsfeed.\n \
+!addpost    - Adauga o postare.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
@@ -43,16 +77,32 @@
 "Password: "
 
 #define T_LOGIN_FAIL \
-"Login esuat. Utilizatorul nu exista sau parola este incorecta."
+"Login esuat. Utilizatorul nu exista sau parola este incorecta.\n"
 
 #define T_LOGIN_SUCCES \
-"Login cu succes! Bine ati (re)venit!"
+"Login cu succes! Bine ati (re)venit!\n"
 
 #define T_LOGOUT_FAIL \
-"Logout esuat. Nu sunteti conectat."
+"Logout esuat. Nu sunteti conectat.\n"
 
 #define T_LOGOUT_SUCCES \
-"Logout cu succes."
+"Logout cu succes.\n"
+
+#define T_POST_TEXT \
+"Textul postarii (max. 100 caractere): "
+
+#define T_POST_VISIBILITY \
+"Vizibilitate postare (0 - public, 1 - friends, 2 - close friends): "
+
+#define T_ADD_POST_FAIL \
+"Postarea nu a fost adaugata. Nu sunteti conectat / date incorecte.\n"
+
+#define T_ADD_POST_SUCCES \
+"Postare adaugata cu succes!\n"
+
+#endif
+
+#ifdef H_CLIENT
 
 // Mesaje eroare/informare client
 #define C_WRITE_ERROR \
@@ -73,6 +123,9 @@ perror("[CLIENT] Eroare la connect()\n"); \
 exit(1);\
 }
 
+#define C_CONNECT_SUCCES \
+printf("Bine ai venit!! Tasteaza [!help] pentru a vedea instructiunile.\n");
+
 #define C_SYNTAX_ERROR \
 {\
 printf("[CLIENT] Sintaxa: %s <adresa_server> <port>\n", argv[0]);\
@@ -84,6 +137,11 @@ return -1;\
 perror("[CLIENT] Eroare la socket\n");\
 return -1;\
 }
+
+#endif
+
+
+#ifdef H_SERVER
 
 // Mesaje eroare/informare server
 
@@ -151,10 +209,40 @@ printf("[SERVER] Clientul cu ID = %d s-a conectat.\n", idToSend);
 #define S_LOGOUT \
 printf("[SERVER] Clientul cu ID = %d s-a deconectat.\n", clientLoggedOut);
 
+#define S_NEW_POST \
+printf("[SERVER] Postare noua!\n");
+
 #define S_NEW_CLIENT \
-printf("[SERVER] Client nou conectat\n");
+printf("[SERVER] Client nou!\n");
+
+#define S_QUIT_CLIENT \
+printf("[SERVER] Un client a iesit\n");
+
+#endif
+
+#ifdef H_DATABASE
 
 // Mesaje de eroare/informare DB
+
+#define DB_OPEN_FRIENDSHIPS_ERROR \
+{\
+printf("[DATABASE] Eroare la open() - tabela Friendships"); \
+return false;\
+}
+
+#define DB_CREATE_FRIENDSHIPS_ERROR \
+{\
+printf("[DATABASE] Eroare la create table - tabela Friendships\n %s\n", err);\
+sqlite3_free(err);\
+sqlite3_close(db);\
+return false;\
+}
+
+#define DB_CREATE_FRIENDSHIPS_OK \
+printf("[DATABASE] Tabela Friendships creata cu succes\n");
+
+#define DB_SELECT_FRIENDSHIPS_ERROR \
+printf("[DATABASE] Eroare la Select() din Friendships\n");
 
 #define DB_OPEN_USER_ERROR \
 {\
@@ -193,6 +281,9 @@ sqlite3_free(err);\
 sqlite3_close(db);\
 }
 
+#define DB_INSERT_POST_ERROR \
+printf("[DATABASE] Eroare la inregistrarea postarii\n");
+
 #define DB_SELECT_POSTS_ERROR \
 printf("[DATABASE] Eroare la Select() din Posts\n");
 
@@ -208,31 +299,6 @@ printf("[DATABASE] Tabela Posts creata cu succes\n");
 #define DB_SQL_COMMAND \
 printf("[DATABASE] SQL Command: %s\n", sql.c_str());
 
-enum EMesaje
-{
-    EMUnknown = 0,
-    EMHelp,
-    EMQuit,
-    EMRegisterFail,
-    EMRegisterSucces,
-    EMLoginFail,
-    EMLoginSucces,
-    EMLogoutFail,
-    EMLogoutSucces
-};
-
-enum EComenzi
-{
-    ECUnknown = 0,
-    ECHelp,
-    ECQuit,
-    ECRegister,
-    ECLogin,
-    ECLogout,
-    ECShowPosts,
-    ECRegisterA
-};
-
-void ConvertToMessage(EMesaje mesaj, char *result);
+#endif
 
 #endif // H_TEXT

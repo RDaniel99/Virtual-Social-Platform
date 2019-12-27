@@ -1,3 +1,5 @@
+#define H_CLIENT
+
 #include <iostream>
 #include <cstdio>
 #include <sys/types.h>
@@ -24,10 +26,12 @@ bool    ExecuteCommand(int commandId);
 bool UnknownCommand();              // commandId = 0
 bool HelpCommand();                 // commandId = 1
 bool QuitCommand();                 // commandId = 2
-bool RegisterCommand(int isAdmin);  // commandId = 3
+bool RegisterCommand(int isAdmin);  // commandId = 3 sau 7
 bool LoginCommand();                // commandId = 4
 bool LogoutCommand();               // commandId = 5
-bool ShowPostsCommand();            // commandId = 6;
+bool ShowPostsCommand();            // commandId = 6
+bool AddPostCommand();              // commandId = 8
+
 
 int main(int argc, char **argv)
 {
@@ -45,6 +49,8 @@ int main(int argc, char **argv)
 
     if(connect(socketDescriptorToServer, (struct sockaddr *) &server, sizeof(struct sockaddr)) == -1)
         C_CONNECT_ERROR
+
+    C_CONNECT_SUCCES
 
     while(1)
     {
@@ -73,6 +79,7 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "logout\n") == 0)        return ECLogout;
     if(strcmp(msg + 1, "showposts\n") == 0)     return ECShowPosts;
     if(strcmp(msg + 1, "registera\n") == 0)     return ECRegisterA;
+    if(strcmp(msg + 1, "addpost\n") == 0)       return ECAddPost;
 
     return ECUnknown;
 }
@@ -92,6 +99,7 @@ bool ExecuteCommand(int commandId)
         case ECLogout:      return LogoutCommand();
         case ECShowPosts:   return ShowPostsCommand();
         case ECRegisterA:   return RegisterCommand(1);
+        case ECAddPost:     return AddPostCommand();
     }
 
     return false;
@@ -243,4 +251,50 @@ bool ShowPostsCommand()
         C_READ_ERROR
 
     printf("%s\n", msg);
+}
+
+bool AddPostCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    int testId = -1;
+
+    if(read(socketDescriptorToServer, &testId, 4) <= 0)
+        C_READ_ERROR
+
+    if(!testId)
+    {
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)
+            C_READ_ERROR
+
+        printf("%s\n", msg);
+
+        return true;
+    }
+
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    return true;
 }

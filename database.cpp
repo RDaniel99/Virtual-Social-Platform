@@ -20,16 +20,23 @@ struct postinfo
 vector<postinfo>    db_posts;
 int                 db_callbackAns;
 
+// Users Table
 string              db_username;
 string              db_password;
 int                 db_isAdmin;
 int                 db_isOnline;
 
 int                 db_id;
-
+// Posts Table
 string              db_posttext;
 int                 db_authorid;
 int                 db_visibility;
+
+//  Friendship Table
+int                 db_friendId1;
+int                 db_friendId2;
+int                 db_typefriendship;
+int                 db_isaccepted;
 
 bool createDatabasePosts()
 {
@@ -100,12 +107,42 @@ bool createDatabaseUsers()
     return true;
 }
 
+bool createDatabaseFriendships()
+{
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_FRIENDSHIPS_ERROR
+
+    char const *sql =   "DROP TABLE IF EXISTS Friendships;" 
+                        "CREATE TABLE Friendships(IDSender INT, IdReciever INT, TypeFriends INT, IsAccepted INT);" 
+                        "INSERT INTO Friendships VALUES(1, 4, 1, 1);" 
+                        "INSERT INTO Friendships VALUES(2, 1, 2, 0);" 
+                        "INSERT INTO Friendships VALUES(2, 4, 2, 1);";
+        
+    exitCode = sqlite3_exec(db, sql, 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_CREATE_FRIENDSHIPS_ERROR
+
+    sqlite3_close(db);
+
+    DB_CREATE_FRIENDSHIPS_OK
+
+    return true;
+}
+
 bool createDatabases()
 {
     bool ok = true;
 
     ok = ok & createDatabaseUsers();
     ok = ok & createDatabasePosts();
+    ok = ok & createDatabaseFriendships();
 
     return ok;
 }
@@ -375,10 +412,104 @@ bool validateAdmin(int isAdmin)
     return true;
 }
 
-bool areFriends(int id1, int id2)
+bool areFriends(int id1, int id2, int accepted)
 {
-    // to-do: friends table
+    db_callbackAns = 0;
+
+    string sql = "";
+    sql += "SELECT * FROM Friendships WHERE ";
+    sql += "IDSender = ";
+    sql += std::to_string(id1);
+    sql += " AND IdReciever = ";
+    sql += std::to_string(id2);
+    sql += " AND IsAccepted = ";
+    sql += std::to_string(accepted);
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    db_friendId2 = db_friendId1 = 0;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_FRIENDSHIPS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackAreInFriends, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_FRIENDSHIPS_ERROR
+
+    sqlite3_close(db);
+
+    return db_callbackAns && accepted == db_isaccepted;
+}
+
+bool validatePostText(char *postText)
+{
+    if(strlen(postText) > 0 && strlen(postText) <= 100)
+        return true;
+
     return false;
+}
+
+bool validateOwnerId(int ownerid)
+{
+    return existsId(ownerid, 1);
+}
+
+bool validateVisibility(int visibility)
+{
+    printf("vis: %d\n", visibility);
+    return (0 <= visibility && visibility <= 2);
+}
+
+bool addPost(char *postText, int ownerid, int visibility)
+{
+    bool ok = true;
+
+    ok = ok & validatePostText(postText);
+    ok = ok & validateOwnerId(ownerid);
+    ok = ok & validateVisibility(visibility);
+
+    if(!ok)
+        return false;
+
+    int idPost = computeNextId(2);
+
+    string sql = "";
+    sql += "INSERT INTO Posts VALUES(";
+    sql += std::to_string(idPost);
+    sql += ", '";
+    sql += postText;
+    sql += "', ";
+    sql += std::to_string(ownerid);
+    sql += ", ";
+    sql += std::to_string(visibility);
+    sql += ");";
+    
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_POSTS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_POSTS_ERROR
+
+    sqlite3_close(db);
+
+    return true;
 }
 
 bool isUserAdmin(int userid)
@@ -502,14 +633,19 @@ bool isPostValid(char *authorid, char *visibility)
     if(atoi(authorid) == db_id)
         return true;
 
+    if(atoi(visibility) == 0)
+        return true;
+
     if(isUserAdmin(db_id))
         return true;
 
-    if(areFriends(atoi(authorid), db_id))
-        return true;
+    if(areFriends(atoi(authorid), db_id, 1))
+        if(db_typefriendship >= atoi(visibility))
+            return true;
 
-    if(atoi(visibility))
-        return true;
+    if(areFriends(db_id, atoi(authorid), 1))
+        if(db_typefriendship >= atoi(visibility))
+            return true;
 
     return false;
 }
@@ -532,3 +668,19 @@ int callbackCollectPosts(void *NotUsed, int argc, char **argv,
 
     return 0;
 }
+
+int callbackAreInFriends(void *NotUsed, int argc, char **argv, 
+                    char **azColName) {
+    
+    db_callbackAns = 1;
+
+    if(argc)
+    {
+        db_friendId1 = atoi(argv[0]);
+        db_friendId2 = atoi(argv[1]);
+        db_typefriendship = atoi(argv[2]);
+        db_isaccepted = atoi(argv[3]);
+    }
+
+    return 0;
+}                
