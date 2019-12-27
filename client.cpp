@@ -21,12 +21,13 @@ int clientId = -1;
 int     GetCommand(char *msg);
 bool    ExecuteCommand(int commandId);
 
-bool UnknownCommand();  // commandId = 0
-bool HelpCommand();     // commandId = 1
-bool QuitCommand();     // commandId = 2
-bool RegisterCommand(); // commandId = 3
-bool LoginCommand();    // commandId = 4
-bool LogoutCommand();   // commandId = 5
+bool UnknownCommand();              // commandId = 0
+bool HelpCommand();                 // commandId = 1
+bool QuitCommand();                 // commandId = 2
+bool RegisterCommand(int isAdmin);  // commandId = 3
+bool LoginCommand();                // commandId = 4
+bool LogoutCommand();               // commandId = 5
+bool ShowPostsCommand();            // commandId = 6;
 
 int main(int argc, char **argv)
 {
@@ -60,18 +61,20 @@ int main(int argc, char **argv)
 int GetCommand(char *msg)
 {
     if(strlen(msg) == 0)
-        return 0;
+        return ECUnknown;
 
     if(msg[0] != '!')
-        return 0;
+        return ECUnknown;
 
-    if(strcmp(msg + 1, "help\n") == 0)          return 1;
-    if(strcmp(msg + 1, "quit\n") == 0)          return 2;
-    if(strcmp(msg + 1, "register\n") == 0)      return 3;
-    if(strcmp(msg + 1, "login\n") == 0)         return 4;
-    if(strcmp(msg + 1, "logout\n") == 0)        return 5;
+    if(strcmp(msg + 1, "help\n") == 0)          return ECHelp;
+    if(strcmp(msg + 1, "quit\n") == 0)          return ECQuit;
+    if(strcmp(msg + 1, "register\n") == 0)      return ECRegister;
+    if(strcmp(msg + 1, "login\n") == 0)         return ECLogin;
+    if(strcmp(msg + 1, "logout\n") == 0)        return ECLogout;
+    if(strcmp(msg + 1, "showposts\n") == 0)     return ECShowPosts;
+    if(strcmp(msg + 1, "registera\n") == 0)     return ECRegisterA;
 
-    return 0;
+    return ECUnknown;
 }
 
 bool ExecuteCommand(int commandId)
@@ -84,9 +87,11 @@ bool ExecuteCommand(int commandId)
         case ECUnknown:     return UnknownCommand();
         case ECHelp:        return HelpCommand();
         case ECQuit:        return QuitCommand();
-        case ECRegister:    return RegisterCommand();
+        case ECRegister:    return RegisterCommand(0);
         case ECLogin:       return LoginCommand();
         case ECLogout:      return LogoutCommand();
+        case ECShowPosts:   return ShowPostsCommand();
+        case ECRegisterA:   return RegisterCommand(1);
     }
 
     return false;
@@ -124,7 +129,7 @@ bool QuitCommand()
     exit(0);
 }
 
-bool RegisterCommand()
+bool RegisterCommand(int isAdmin)
 {
     if(write(socketDescriptorToServer, &clientId, 4) <= 0)  C_WRITE_ERROR
 
@@ -138,6 +143,9 @@ bool RegisterCommand()
 
         return 0;
     }
+
+    // Mesaj cu tipul de register
+    if(write(socketDescriptorToServer, &isAdmin, 4) < 0) C_WRITE_ERROR
 
     // Mesaj cu nume
     bzero(msg, 1000);
@@ -219,6 +227,17 @@ bool LogoutCommand()
         C_WRITE_ERROR
 
     clientId = -1;
+
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
+
+    printf("%s\n", msg);
+}
+
+bool ShowPostsCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
 
     if(read(socketDescriptorToServer, msg, 1000) < 0)
         C_READ_ERROR

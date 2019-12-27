@@ -12,13 +12,17 @@
 !quit - Iesire.\n \
 !register - Inregistrare utilizator nou.\n \
 !login - Conectare.\n \
-!logout - Deconectare.\n"
+!logout - Deconectare.\n \
+!showposts - Afiseaza postarile din newsfeed.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
 
 #define T_USER_ALREADY_LOGGED \
 "Sunteti deja conectat!\n"
+
+#define T_NO_POST_TO_SHOW \
+"Nicio postare de afisat.\n"
 
 #define T_REGISTER_FAIL \
 "Inregistrare esuata: Date gresite\n"
@@ -82,6 +86,9 @@ return -1;\
 }
 
 // Mesaje eroare/informare server
+
+#define S_UNLINK_FUNCTIONS \
+printf("[SERVER] Functii nelegate corespunzator!\n");
 
 #define S_WRITE_ERROR \
 {\
@@ -221,7 +228,9 @@ enum EComenzi
     ECQuit,
     ECRegister,
     ECLogin,
-    ECLogout
+    ECLogout,
+    ECShowPosts,
+    ECRegisterA
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);

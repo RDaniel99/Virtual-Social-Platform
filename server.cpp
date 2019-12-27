@@ -28,12 +28,14 @@ int client;
 void waitClosedChild(int sig);
 bool ExecuteCommand(int commandId);
 
-bool UnknownCommand();  // commandId = 0
-bool HelpCommand();     // commandId = 1
-bool QuitCommand();     // commandId = 2
-bool RegisterCommand(); // commandId = 3
-bool LoginCommand();    // commandId = 4
-bool LogoutCommand();   // commandId = 5
+bool UnknownCommand();              // commandId = 0
+bool HelpCommand();                 // commandId = 1
+bool QuitCommand();                 // commandId = 2
+bool RegisterCommand(int isAdmin);  // commandId = 3
+bool LoginCommand();                // commandId = 4
+bool LogoutCommand();               // commandId = 5
+bool ShowPostsCommand();            // commandId = 6;
+
 
 int main()
 {
@@ -112,9 +114,11 @@ bool ExecuteCommand(int commandId)
         case ECUnknown:     return UnknownCommand();
         case ECHelp:        return HelpCommand();
         case ECQuit:        return QuitCommand();
-        case ECRegister:    return RegisterCommand();
+        case ECRegister:    return RegisterCommand(0);
         case ECLogin:       return LoginCommand();
         case ECLogout:      return LogoutCommand();
+        case ECShowPosts:   return ShowPostsCommand();
+        case ECRegisterA:   return RegisterCommand(1);
     }
 
     return false;
@@ -167,7 +171,7 @@ bool QuitCommand()
     exit(0);
 }
 
-bool RegisterCommand()
+bool RegisterCommand(int isAdmin)
 {
     int msgId = -1;
     int tempId = -1;
@@ -192,6 +196,13 @@ bool RegisterCommand()
 
         return true;
     }
+
+    int testAdmin = -1;
+    if(read(client, &testAdmin, 4) < 0)
+        S_READ_ERROR
+
+    if(testAdmin != isAdmin)
+        S_UNLINK_FUNCTIONS
     
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_NAME);
@@ -217,7 +228,7 @@ bool RegisterCommand()
     nume[strlen(nume) - 1] = 0;
     pass[strlen(pass) - 1] = 0;
         
-    if(insertUser(nume, pass))
+    if(insertUser(nume, pass, isAdmin))
         msgId = 4;
     else
         msgId = 3;
@@ -323,4 +334,22 @@ bool LogoutCommand()
 
     if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR
+}
+
+bool ShowPostsCommand()
+{
+    int clientId = -1;
+
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    strcpy(msg, "");
+
+    if(!getPosts(clientId, msg))
+        strcpy(msg, T_NO_POST_TO_SHOW);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    return true;
 }

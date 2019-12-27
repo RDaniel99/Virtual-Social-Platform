@@ -5,14 +5,31 @@
 #include <string>
 #include <cstring>
 #include <set>
+#include <vector>
 #include <sqlite3.h>
 
 using namespace std;
 
-int         db_callbackAns;
-int         db_id;
-string      db_username;
-string      db_password;
+struct postinfo
+{
+    int postId;
+    string postText;
+    int postAuthor;
+};
+
+vector<postinfo>    db_posts;
+int                 db_callbackAns;
+
+string              db_username;
+string              db_password;
+int                 db_isAdmin;
+int                 db_isOnline;
+
+int                 db_id;
+
+string              db_posttext;
+int                 db_authorid;
+int                 db_visibility;
 
 bool createDatabasePosts()
 {
@@ -215,6 +232,9 @@ int computeNextId(int tabel)
 
 bool existsId(int id, int tabel)
 {
+    if(id == -1)
+        return false;
+
     db_callbackAns = 0;
 
     string table = "";
@@ -355,21 +375,110 @@ bool validateAdmin(int isAdmin)
     return true;
 }
 
+bool areFriends(int id1, int id2)
+{
+    // to-do: friends table
+    return false;
+}
+
+bool isUserAdmin(int userid)
+{
+    if(!existsId(userid, 1))
+        return false;
+
+    return db_isAdmin;
+}
+
+bool getPosts(int userid, char *msg)
+{
+    db_posts.clear();
+
+    db_id = userid;
+
+    string sql = "";
+    sql += "SELECT * FROM Posts";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_POSTS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectPosts, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_POSTS_ERROR
+
+    sqlite3_close(db);
+
+    if(db_posts.size() == 0)
+        return false;
+    
+    string ans = "";
+    for(unsigned int i = 0; i < db_posts.size(); i++)
+    {
+        string toAppend = "";
+        toAppend += "PostId: ";
+        toAppend += std::to_string(db_posts[i].postId);
+        toAppend += "| ";
+
+        toAppend += "Message: ";
+        toAppend += db_posts[i].postText;
+        toAppend += "| ";
+        
+        toAppend += "AuthorId: ";
+        toAppend += std::to_string(db_posts[i].postAuthor);
+        toAppend += ";\n";
+
+        ans += toAppend;
+    }
+
+    strcpy(msg, ans.c_str());
+
+    return true;
+}
+
 int callbackCheckIfExists(void *NotUsed, int argc, char **argv, 
                     char **azColName) {
     
     NotUsed = 0;
-
-    db_username = "";
-    db_password = "";
-    db_id = -1;
     
     if(argc)
     {
         db_callbackAns = 1;
-        db_id = atoi(argv[0]);
-        db_username += argv[1];
-        db_password += argv[2];
+
+        if(argc == 5)
+        {
+            db_username = "";
+            db_password = "";
+            db_id = -1;
+            db_isAdmin = 0;
+            db_isOnline = 0;
+
+            db_id = atoi(argv[0]);
+            db_username += argv[1];
+            db_password += argv[2];
+            db_isAdmin = atoi(argv[3]);
+            db_isOnline = atoi(argv[4]);
+        }
+
+        if(argc == 4)
+        {
+            db_id = -1;
+            db_posttext = "";
+            db_authorid = -1;
+            db_visibility = 0;
+
+            db_id = atoi(argv[0]);
+            db_authorid = atoi(argv[2]);
+            db_posttext += argv[1];
+            db_visibility = atoi(argv[3]);
+        }
     }
 
     return 0;
@@ -380,11 +489,45 @@ int callbackGetMaxId(void *NotUsed, int argc, char **argv,
     
     NotUsed = 0;
 
-    printf("argc = %d\n\n", argc);
-
     if(argc)
     {
         db_callbackAns = atoi(argv[0]);
+    }
+
+    return 0;
+}
+
+bool isPostValid(char *authorid, char *visibility)
+{
+    if(atoi(authorid) == db_id)
+        return true;
+
+    if(isUserAdmin(db_id))
+        return true;
+
+    if(areFriends(atoi(authorid), db_id))
+        return true;
+
+    if(atoi(visibility))
+        return true;
+
+    return false;
+}
+
+int callbackCollectPosts(void *NotUsed, int argc, char **argv, 
+                    char **azColName) {
+    
+    NotUsed = 0;
+        
+    if(isPostValid(argv[2], argv[3]))
+    {
+        postinfo toAdd;
+        toAdd.postId = atoi(argv[0]);
+        toAdd.postText = "";
+        toAdd.postText += argv[1];
+        toAdd.postAuthor = atoi(argv[2]);
+
+        db_posts.push_back(toAdd);
     }
 
     return 0;
