@@ -27,6 +27,7 @@ bool validatePostText(char *postText);
 bool validateOwnerId(int ownerid);
 bool validateVisibility(int visibility);
 bool addPost(char *postText, int ownerid, int visibility);
+bool deletePost(int postid, int userid);
 
 int callbackCheckIfExists(void *, int, char **, char **);
 int callbackGetMaxId(void *, int, char **, char **);

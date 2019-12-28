@@ -19,6 +19,8 @@ void ConvertToMessage(EMesaje mesaj, char *result)
         case EMLogoutSucces:        strcpy(result, T_LOGOUT_SUCCES);        break;
         case EMAddPostFail:         strcpy(result, T_ADD_POST_FAIL);        break;
         case EMAddPostSucces:       strcpy(result, T_ADD_POST_SUCCES);      break;
+        case EMDeletePostFail:      strcpy(result, T_DELETE_POST_FAIL);     break;
+        case EMDeletePostSucces:    strcpy(result, T_DELETE_POST_SUCCES);   break;
 
         default:                    strcpy(result, T_UNKNOWN_MESSAGE);      break;
     }

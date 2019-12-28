@@ -416,6 +416,9 @@ bool areFriends(int id1, int id2, int accepted)
 {
     db_callbackAns = 0;
 
+    if(id1 == -1 || id2 == -1)
+        return false;
+
     string sql = "";
     sql += "SELECT * FROM Friendships WHERE ";
     sql += "IDSender = ";
@@ -506,6 +509,49 @@ bool addPost(char *postText, int ownerid, int visibility)
 
     if(exitCode != SQLITE_OK)
         DB_SELECT_POSTS_ERROR
+
+    sqlite3_close(db);
+
+    return true;
+}
+
+bool deletePost(int postid, int userid)
+{
+    bool ok = true;
+
+    ok = ok & existsId(userid, 1);
+    ok = ok & existsId(postid, 2);
+    
+    if(!ok)
+        return false;
+    
+    ok = false;
+    ok = ok | (userid == db_authorid);
+    ok = ok | isUserAdmin(userid);
+
+    if(!ok)
+        return false;
+
+    string sql = "";
+    sql += "DELETE FROM Posts WHERE PostId = ";
+    sql += std::to_string(postid);
+    sql += ";";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_POSTS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_DELETE_POST_ERROR
 
     sqlite3_close(db);
 

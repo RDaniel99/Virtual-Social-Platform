@@ -31,6 +31,7 @@ bool LoginCommand();                // commandId = 4
 bool LogoutCommand();               // commandId = 5
 bool ShowPostsCommand();            // commandId = 6
 bool AddPostCommand();              // commandId = 8
+bool DeletePostCommand();           // commandId = 9
 
 
 int main(int argc, char **argv)
@@ -80,6 +81,7 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "showposts\n") == 0)     return ECShowPosts;
     if(strcmp(msg + 1, "registera\n") == 0)     return ECRegisterA;
     if(strcmp(msg + 1, "addpost\n") == 0)       return ECAddPost;
+    if(strcmp(msg + 1, "deletepost\n") == 0)    return ECDeletePost;
 
     return ECUnknown;
 }
@@ -100,6 +102,7 @@ bool ExecuteCommand(int commandId)
         case ECShowPosts:   return ShowPostsCommand();
         case ECRegisterA:   return RegisterCommand(1);
         case ECAddPost:     return AddPostCommand();
+        case ECDeletePost:  return DeletePostCommand();
     }
 
     return false;
@@ -281,6 +284,43 @@ bool AddPostCommand()
     bzero(msg, 1000);
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    return true;
+}
+
+bool DeletePostCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    int testId = -1;
+
+    if(read(socketDescriptorToServer, &testId, 4) <= 0)
+        C_READ_ERROR
+
+    if(!testId)
+    {
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)
+            C_READ_ERROR
+
+        printf("%s\n", msg);
+
+        return true;
+    }
 
     fflush(stdout);
     bzero(msg, 1000);

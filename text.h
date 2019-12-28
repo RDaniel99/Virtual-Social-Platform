@@ -13,7 +13,9 @@ enum EMesaje
     EMLogoutFail,
     EMLogoutSucces,
     EMAddPostFail,
-    EMAddPostSucces
+    EMAddPostSucces,
+    EMDeletePostFail,
+    EMDeletePostSucces
 };
 
 enum EComenzi
@@ -26,7 +28,8 @@ enum EComenzi
     ECLogout,
     ECShowPosts,
     ECRegisterA,
-    ECAddPost
+    ECAddPost,
+    ECDeletePost
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -47,7 +50,8 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 !login      - Conectare.\n \
 !logout     - Deconectare.\n \
 !showposts  - Afiseaza postarile din newsfeed.\n \
-!addpost    - Adauga o postare.\n"
+!addpost    - Adauga o postare.\n \
+!deletepost - Sterge o postare.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
@@ -91,6 +95,9 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 #define T_POST_TEXT \
 "Textul postarii (max. 100 caractere): "
 
+#define T_POST_ID \
+"ID-ul postarii: "
+
 #define T_POST_VISIBILITY \
 "Vizibilitate postare (0 - public, 1 - friends, 2 - close friends): "
 
@@ -99,6 +106,13 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 
 #define T_ADD_POST_SUCCES \
 "Postare adaugata cu succes!\n"
+
+#define T_DELETE_POST_FAIL \
+"Postarea nu a fost stearsa. Nu aveti drepturile necesare / nu este postarea Dvs \
+postarea nu exista / nu sunteti conectat.\n"
+
+#define T_DELETE_POST_SUCCES \
+"Postarea a fost stearsa cu succes!\n"
 
 #endif
 
@@ -286,6 +300,9 @@ printf("[DATABASE] Eroare la inregistrarea postarii\n");
 
 #define DB_SELECT_POSTS_ERROR \
 printf("[DATABASE] Eroare la Select() din Posts\n");
+
+#define DB_DELETE_POST_ERROR \
+printf("[DATABASE] Eroare la stergerea unei postari\n");
 
 #define DB_OPEN_POSTS_ERROR \
 {\

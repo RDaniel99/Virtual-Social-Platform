@@ -38,6 +38,7 @@ bool LoginCommand();                // commandId = 4
 bool LogoutCommand();               // commandId = 5
 bool ShowPostsCommand();            // commandId = 6
 bool AddPostCommand();              // commandId = 8
+bool DeletePostCommand();           // commandId = 9
 
 int main()
 {
@@ -121,6 +122,7 @@ bool ExecuteCommand(int commandId)
         case ECShowPosts:   return ShowPostsCommand();
         case ECRegisterA:   return RegisterCommand(1);
         case ECAddPost:     return AddPostCommand();
+        case ECDeletePost:  return DeletePostCommand();
     }
 
     return false;
@@ -396,7 +398,6 @@ bool AddPostCommand()
         S_READ_ERROR
 
     textPostare[strlen(textPostare) - 1] = 0;
-    printf("S-a citit: %s\n", textPostare);
 
     strcpy(msg, "");
     strcpy(msg, T_POST_VISIBILITY);
@@ -409,9 +410,20 @@ bool AddPostCommand()
     if(read(client, msg, 1000) < 0)
         S_READ_ERROR
 
-    visibility = atoi(msg);
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] && msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    printf("ce mortii ei: %d\n", visibility);
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    visibility = atoi(msg);
 
     if(addPost(textPostare, clientId, visibility))
         msgId = 10;
@@ -423,6 +435,72 @@ bool AddPostCommand()
 
     if(msgId == 10)
         S_NEW_POST
+
+    return true;
+}
+
+bool DeletePostCommand()
+{
+    int msgId = 11;
+
+    int clientId = - 1;
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    int testResult = 1;
+
+    if(clientId == -1)
+        testResult = 0;
+        
+    if(write(client, &testResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testResult == 0)
+    {
+        strcpy(msg, "");
+        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+
+    strcpy(msg, "");
+    strcpy(msg, T_POST_ID);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    int postId;
+
+    bzero(msg, 1000);
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] || msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    postId = atoi(msg);
+
+    if(deletePost(postId, clientId))
+        msgId = 12;
+    
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
 
     return true;
 }
