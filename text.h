@@ -22,6 +22,8 @@ enum EMesaje
     EMEditProfileSucces,
     EMSentFriendRequestFail,
     EMSentFriendRequestSucces,
+    EMRemoveFriendFail,
+    EMRemoveFriendSucces
 };
 
 enum EComenzi
@@ -40,7 +42,9 @@ enum EComenzi
     ECEditPost,
     ECEditProfile,
     ECAddFriend,
-    ECRequests
+    ECRequests,
+    ECShowFriends,
+    ECRemoveFriend
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -87,6 +91,9 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 #define T_NO_FRIEND_REQ \
 "Nicio cerere de prietenie fara raspuns.\n"
 
+#define T_NO_FRIEND_CONNECTED \
+"Niciun prieten.\n"
+
 #define T_REGISTER_FAIL \
 "Inregistrare esuata: Date gresite\n"
 
@@ -101,6 +108,14 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 
 #define T_REGISTER_PRIVACY \
 "Tip de cont (0 - public, 1 - privat): "
+
+#define T_REMOVE_FRIEND_FAIL \
+"Utilizatorul nu a fost sters din lista de prieteni. Utilizatorul nu exista / nu va e prieten.\n"
+
+#define T_REMOVE_FRIEND_SUCCES \
+"Utilizatorul a fost sters cu succes din lista de prieteni.\n"
+
+#define T_REMOVE
 
 #define T_LOGIN_NAME \
 "Nume: "
@@ -312,6 +327,9 @@ printf("[DATABASE] Tabela Friendships creata cu succes\n");
 
 #define DB_SELECT_FRIENDSHIPS_ERROR \
 printf("[DATABASE] Eroare la Select() din Friendships\n");
+
+#define DB_DELETE_FRIENDSHIPS_ERROR \
+printf("[DATABASE] Eroare la Delete() din Friendships\n");
 
 #define DB_OPEN_USER_ERROR \
 {\

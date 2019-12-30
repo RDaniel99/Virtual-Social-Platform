@@ -26,6 +26,7 @@ struct postinfo
 struct friendshipinfo
 {
     int idSender;
+    int idReciever;
     int type;
 };
 
@@ -167,6 +168,10 @@ bool updateUser(char *nume, char *pass, int privacy, int userid)
     bool ok = true;
     
     ok = ok & validateName(nume);
+
+    if(!ok && strcmp(nume, db_username.c_str()) == 0)
+        ok = true;
+
     ok = ok & validatePass(pass);
     ok = ok & validatePrivacy(privacy);
 
@@ -781,6 +786,45 @@ bool addFriend(int senderId, int recieverId, int type)
     return true;
 }
 
+bool deleteFriend(int userid, int friendid)
+{
+    if(!areFriends(userid, friendid, 1) && !areFriends(friendid, userid, 1))
+        return false;
+
+    string sql = "";
+    sql += "DELETE FROM Friendships WHERE (IdSender = ";
+    sql += std::to_string(userid);
+    sql += " AND IdReciever = ";
+    sql += std::to_string(friendid);
+    sql += ") OR (IdSender = ";
+    sql += std::to_string(friendid);
+    sql += " AND IdReciever = ";
+    sql += std::to_string(userid);
+    sql += ");";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    db_friendId2 = db_friendId1 = 0;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_FRIENDSHIPS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_DELETE_FRIENDSHIPS_ERROR
+
+    sqlite3_close(db);
+
+    return true;
+}
+
 bool getName(int userid, char *msg)
 {
     strcpy(msg, "");
@@ -791,7 +835,7 @@ bool getName(int userid, char *msg)
     return strlen(msg) > 0;
 }
 
-bool getFriendReq(int userid, char *msg)
+bool getFriends(int userid, char *msg)
 {
     db_friends.clear();
 
@@ -799,7 +843,70 @@ bool getFriendReq(int userid, char *msg)
         return false;
     
     string sql = "";
-    sql += "SELECT * FROM Friendships WHERE IsAccepted = 0 AND IdReciever = ";
+    sql += "SELECT * FROM Friendships WHERE IsAccepted = 1 AND (IdReciever = ";
+    sql += std::to_string(userid);
+    sql += " OR IdSender = ";
+    sql += std::to_string(userid);
+    sql += ");";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    db_friendId2 = db_friendId1 = 0;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_FRIENDSHIPS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectRequests, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_FRIENDSHIPS_ERROR
+
+    sqlite3_close(db);
+
+    if(db_friends.size() == 0)
+        return false;
+    
+    string ans = "";
+
+    for(unsigned int i = 0; i < db_friends.size(); i++)
+    {
+        if(db_friends[i].idSender != userid)
+            getName(db_friends[i].idSender, msg);
+        if(db_friends[i].idReciever != userid)
+            getName(db_friends[i].idReciever, msg);
+
+        string toAdd = "";
+        toAdd += "Friend: ";
+        toAdd += msg;
+        toAdd += "| Type: ";
+        toAdd += (db_friends[i].type == 1 ? "1 (friends)\n" : "2 (close-friends)\n");
+
+        ans += toAdd;
+    }
+
+    strcpy(msg, "");
+    strcpy(msg, ans.c_str());
+
+    return true;
+}
+
+bool getFriendReq(int userid, char *msg, int accepted)
+{
+    db_friends.clear();
+
+    if(!existsId(userid, 1))
+        return false;
+    
+    string sql = "";
+    sql += "SELECT * FROM Friendships WHERE IsAccepted = ";
+    sql += (accepted ? '1' : '0');
+    sql += " AND IdReciever = ";
     sql += std::to_string(userid);
     sql += ";";
 
@@ -1051,6 +1158,7 @@ int callbackCollectRequests(void *NotUsed, int argc, char **argv, char **azColNa
     {
         friendshipinfo toAdd;
         toAdd.idSender = atoi(argv[0]);
+        toAdd.idReciever = atoi(argv[1]);
         toAdd.type = atoi(argv[2]);
 
         db_friends.push_back(toAdd);

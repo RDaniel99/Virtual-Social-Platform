@@ -27,6 +27,8 @@ void ConvertToMessage(EMesaje mesaj, char *result)
         case EMEditProfileSucces:       strcpy(result, T_EDIT_PROFILE_SUCCES);      break;
         case EMSentFriendRequestFail:   strcpy(result, T_SENT_FRIEND_REQ_FAIL);     break;
         case EMSentFriendRequestSucces: strcpy(result, T_SENT_FRIEND_REQ_SUCCES);   break;
+        case EMRemoveFriendFail:        strcpy(result, T_REMOVE_FRIEND_FAIL);       break;
+        case EMRemoveFriendSucces:      strcpy(result, T_REMOVE_FRIEND_SUCCES);     break;
 
         default:                        strcpy(result, T_UNKNOWN_MESSAGE);          break;
     }

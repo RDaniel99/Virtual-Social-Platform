@@ -31,20 +31,22 @@ void    waitClosedChild(int sig);
 int     TestUserId();
 bool    ExecuteCommand(int commandId);
 
-bool    UnknownCommand();              // commandId = 0
-bool    HelpCommand();                 // commandId = 1
-bool    QuitCommand();                 // commandId = 2
-bool    RegisterCommand(int isAdmin);  // commandId = 3 sau 7
-bool    LoginCommand();                // commandId = 4
-bool    LogoutCommand();               // commandId = 5
-bool    ShowPostsCommand();            // commandId = 6
-bool    AddPostCommand();              // commandId = 8
-bool    DeletePostCommand();           // commandId = 9
-bool    OnlineCommand();               // commandId = 10
-bool    EditPostCommand();             // commandId = 11
-bool    EditProfileCommand();          // commandId = 12
-bool    AddFriendCommand();            // commandId = 13
-bool    RequestsCommand();             // commandId = 14
+bool    UnknownCommand();               // commandId = 0
+bool    HelpCommand();                  // commandId = 1
+bool    QuitCommand();                  // commandId = 2
+bool    RegisterCommand(int isAdmin);   // commandId = 3 sau 7
+bool    LoginCommand();                 // commandId = 4
+bool    LogoutCommand();                // commandId = 5
+bool    ShowPostsCommand();             // commandId = 6
+bool    AddPostCommand();               // commandId = 8
+bool    DeletePostCommand();            // commandId = 9
+bool    OnlineCommand();                // commandId = 10
+bool    EditPostCommand();              // commandId = 11
+bool    EditProfileCommand();           // commandId = 12
+bool    AddFriendCommand();             // commandId = 13
+bool    RequestsCommand();              // commandId = 14
+bool    FriendsCommand();               // commandId = 15
+bool    RemoveFriendCommand();          // commandId = 16
 
 int main()
 {
@@ -97,7 +99,7 @@ int main()
                 fflush(stdout);
 
                 int commandId;
-                if(read(client, &commandId, 4) <= 0)
+                if(read(client, &commandId, 4) < 0)
                     S_READ_ERROR
 
                 printf("[SERVER] Mesajul a fost receptionat: %d\n", commandId);
@@ -113,7 +115,7 @@ int main()
 int TestUserId()
 {
     int clientId = - 1;
-    if(read(client, &clientId, 4) <= 0)
+    if(read(client, &clientId, 4) < 0)
         S_READ_ERROR
 
     int testResult = 1;
@@ -145,21 +147,23 @@ bool ExecuteCommand(int commandId)
 {
     switch(commandId)
     {
-        case ECUnknown:     return UnknownCommand();
-        case ECHelp:        return HelpCommand();
-        case ECQuit:        return QuitCommand();
-        case ECRegister:    return RegisterCommand(0);
-        case ECLogin:       return LoginCommand();
-        case ECLogout:      return LogoutCommand();
-        case ECShowPosts:   return ShowPostsCommand();
-        case ECRegisterA:   return RegisterCommand(1);
-        case ECAddPost:     return AddPostCommand();
-        case ECDeletePost:  return DeletePostCommand();
-        case ECOnline:      return OnlineCommand();
-        case ECEditPost:    return EditPostCommand();
-        case ECEditProfile: return EditProfileCommand();
-        case ECAddFriend:   return AddFriendCommand();
-        case ECRequests:    return RequestsCommand();
+        case ECUnknown:         return UnknownCommand();
+        case ECHelp:            return HelpCommand();
+        case ECQuit:            return QuitCommand();
+        case ECRegister:        return RegisterCommand(0);
+        case ECLogin:           return LoginCommand();
+        case ECLogout:          return LogoutCommand();
+        case ECShowPosts:       return ShowPostsCommand();
+        case ECRegisterA:       return RegisterCommand(1);
+        case ECAddPost:         return AddPostCommand();
+        case ECDeletePost:      return DeletePostCommand();
+        case ECOnline:          return OnlineCommand();
+        case ECEditPost:        return EditPostCommand();
+        case ECEditProfile:     return EditProfileCommand();
+        case ECAddFriend:       return AddFriendCommand();
+        case ECRequests:        return RequestsCommand();
+        case ECShowFriends:     return FriendsCommand();
+        case ECRemoveFriend:    return RemoveFriendCommand();
     }
 
     return false;
@@ -200,7 +204,7 @@ bool QuitCommand()
 
     int clientLoggedOut = -1;
 
-    if(read(client, &clientLoggedOut, 4) <= 0)
+    if(read(client, &clientLoggedOut, 4) < 0)
         S_READ_ERROR
     
     updateOn(clientLoggedOut, 0);
@@ -219,7 +223,7 @@ bool RegisterCommand(int isAdmin)
     int msgId = -1;
     int tempId = -1;
 
-    if(read(client, &tempId, 4) <= 0)
+    if(read(client, &tempId, 4) < 0)
         S_READ_ERROR
 
     int testIdResult = 0;
@@ -251,7 +255,7 @@ bool RegisterCommand(int isAdmin)
         S_WRITE_ERROR
 
     char nume[1000];
-    if(read(client, nume, 1000) <= 0)
+    if(read(client, nume, 1000) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
@@ -261,7 +265,7 @@ bool RegisterCommand(int isAdmin)
         S_WRITE_ERROR
 
     char pass[1000];
-    if(read(client, pass, 1000) <= 0)
+    if(read(client, pass, 1000) < 0)
         S_READ_ERROR
 
     int privacy = 0;
@@ -310,7 +314,7 @@ bool LoginCommand()
     int msgId = -1;
     int tempId = -1;
 
-    if(read(client, &tempId, 4) <= 0)
+    if(read(client, &tempId, 4) < 0)
         S_READ_ERROR
 
     int testIdResult = 0;
@@ -338,7 +342,7 @@ bool LoginCommand()
         S_WRITE_ERROR
 
     char nume[1000];
-    if(read(client, nume, 1000) <= 0)
+    if(read(client, nume, 1000) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
@@ -348,7 +352,7 @@ bool LoginCommand()
         S_WRITE_ERROR
 
     char pass[1000];
-    if(read(client, pass, 1000) <= 0)
+    if(read(client, pass, 1000) < 0)
         S_READ_ERROR
 
     // Se elimina \n de la final
@@ -385,7 +389,7 @@ bool LogoutCommand()
 
     int clientLoggedOut = -1;
 
-    if(read(client, &clientLoggedOut, 4) <= 0)
+    if(read(client, &clientLoggedOut, 4) < 0)
         S_READ_ERROR
         
     if(updateOn(clientLoggedOut, 0))
@@ -406,7 +410,7 @@ bool ShowPostsCommand()
 {
     int clientId = -1;
 
-    if(read(client, &clientId, 4) <= 0)
+    if(read(client, &clientId, 4) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
@@ -644,7 +648,7 @@ bool EditProfileCommand()
         S_WRITE_ERROR
 
     char nume[1000];
-    if(read(client, nume, 1000) <= 0)
+    if(read(client, nume, 1000) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
@@ -654,7 +658,7 @@ bool EditProfileCommand()
         S_WRITE_ERROR
 
     char pass[1000];
-    if(read(client, pass, 1000) <= 0)
+    if(read(client, pass, 1000) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
@@ -782,5 +786,65 @@ bool RequestsCommand()
     if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR
 
+    return 0;
+}
+
+bool FriendsCommand()
+{
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    strcpy(msg, "");
+    if(!getFriends(clientId, msg))
+        strcpy(msg, T_NO_FRIEND_CONNECTED);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    return 0;
+}
+
+bool RemoveFriendCommand()
+{
+    int msgId = 19;
+
+    int clientId = TestUserId();
+    if(client == -1)
+        return true;
+
+    strcpy(msg, "");
+    strcpy(msg, T_USER_ID);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+    
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] || '9' < msg[i])
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    int idFriend = atoi(msg);
+
+    if(deleteFriend(clientId, idFriend))
+        msgId = 20;
+
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+    
     return 0;
 }
