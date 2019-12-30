@@ -16,6 +16,7 @@ bool insertUser(char *nume, char* pass, int isAdmin = 0, int privacy = 0);
 bool loginUser(char *nume, char* pass);
 bool updateOn(int userid, int value);
 
+bool addFriend(int senderId, int recieverId, int type);
 bool updateUser(char *nume, char *pass, int privacy, int userid);
 bool editPost(int postid, char *postText, int ownerid, int visibility);
 bool getOnline(char *msg);

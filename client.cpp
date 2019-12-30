@@ -35,7 +35,8 @@ bool DeletePostCommand();           // commandId = 9
 bool OnlineCommand();               // commandId = 10
 bool EditPostCommand();             // commandId = 11
 bool EditProfileCommand();          // commandId = 12
-
+bool AddFriendCommand();            // commandId = 13
+bool RequestsCommand();             // commandId = 14
 
 int main(int argc, char **argv)
 {
@@ -88,6 +89,8 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "online\n") == 0)        return ECOnline;
     if(strcmp(msg + 1, "editpost\n") == 0)      return ECEditPost;
     if(strcmp(msg + 1, "editprofile\n") == 0)   return ECEditProfile;
+    if(strcmp(msg + 1, "addfriend\n") == 0)     return ECAddFriend;
+    if(strcmp(msg + 1, "requests\n") == 0)      return ECRequests;
 
     return ECUnknown;
 }
@@ -112,6 +115,8 @@ bool ExecuteCommand(int commandId)
         case ECOnline:      return OnlineCommand();
         case ECEditPost:    return EditPostCommand();
         case ECEditProfile: return EditProfileCommand();
+        case ECAddFriend:   return AddFriendCommand();
+        case ECRequests:    return RequestsCommand();
     }
 
     return false;
@@ -497,5 +502,59 @@ bool EditProfileCommand()
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
     if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
 
+    return true;
+}
+
+bool AddFriendCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    int testId = -1;
+
+    if(read(socketDescriptorToServer, &testId, 4) <= 0)
+        C_READ_ERROR
+
+    if(!testId)
+    {
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)
+            C_READ_ERROR
+
+        printf("%s\n", msg);
+
+        return true;
+    }
+
+    // ID Friend
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    // Tip Friend
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    // Result
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    return true;
+}
+
+bool RequestsCommand()
+{
     return true;
 }

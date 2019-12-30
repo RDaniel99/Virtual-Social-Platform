@@ -42,6 +42,8 @@ bool DeletePostCommand();           // commandId = 9
 bool OnlineCommand();               // commandId = 10
 bool EditPostCommand();             // commandId = 11
 bool EditProfileCommand();          // commandId = 12
+bool AddFriendCommand();            // commandId = 13
+bool RequestsCommand();             // commandId = 14
 
 int main()
 {
@@ -129,6 +131,8 @@ bool ExecuteCommand(int commandId)
         case ECOnline:      return OnlineCommand();
         case ECEditPost:    return EditPostCommand();
         case ECEditProfile: return EditProfileCommand();
+        case ECAddFriend:   return AddFriendCommand();
+        case ECRequests:    return RequestsCommand();
     }
 
     return false;
@@ -762,5 +766,97 @@ bool EditProfileCommand()
     if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR
 
+    return true;
+}
+
+bool AddFriendCommand()
+{
+    int msgId = 17;
+
+    int clientId = - 1;
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    int testResult = 1;
+
+    if(clientId == -1)
+        testResult = 0;
+        
+    if(write(client, &testResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testResult == 0)
+    {
+        strcpy(msg, "");
+        strcpy(msg, T_NEED_LOGIN);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+
+    strcpy(msg, "");
+    strcpy(msg, T_USER_ID);
+
+    if(write(client, msg, 1000) < 0)    
+        S_WRITE_ERROR
+
+    if(read(client, msg, 1000) < 0)     
+        S_READ_ERROR
+
+    int friendId = 0;
+
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if(msg[i] < '0' || msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    friendId = atoi(msg);
+
+    strcpy(msg, "");
+    strcpy(msg, T_USER_TYPE);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+
+    int friendType = 0;
+
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if(msg[i] < '0' || msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    friendType = atoi(msg);
+
+    if(addFriend(clientId, friendId, friendType))
+        msgId = 18;
+    
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+    
+    return true;
+}
+
+bool RequestsCommand()
+{
     return true;
 }

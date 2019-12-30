@@ -19,7 +19,9 @@ enum EMesaje
     EMEditPostFail,
     EMEditPostSucces,
     EMEditProfileFail,
-    EMEditProfileSucces
+    EMEditProfileSucces,
+    EMSentFriendRequestFail,
+    EMSentFriendRequestSucces,
 };
 
 enum EComenzi
@@ -36,7 +38,9 @@ enum EComenzi
     ECDeletePost,
     ECOnline,
     ECEditPost,
-    ECEditProfile
+    ECEditProfile,
+    ECAddFriend,
+    ECRequests
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -51,15 +55,17 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 
 #define T_HELP \
 "Comenzi:\n \
-!help       - Afiseaza acest mesaj.\n \
-!quit       - Iesire.\n \
-!register   - Inregistrare utilizator nou.\n \
-!login      - Conectare.\n \
-!logout     - Deconectare.\n \
-!showposts  - Afiseaza postarile din newsfeed.\n \
-!addpost    - Adauga o postare.\n \
-!deletepost - Sterge o postare.\n \
-!online     - Afiseaza utilizatorii logati.\n"
+!help           - Afiseaza acest mesaj.\n \
+!quit           - Iesire.\n \
+!register       - Inregistrare utilizator nou.\n \
+!login          - Conectare.\n \
+!logout         - Deconectare.\n \
+!showposts      - Afiseaza postarile din newsfeed.\n \
+!addpost        - Adauga o postare.\n \
+!deletepost     - Sterge o postare.\n \
+!online         - Afiseaza utilizatorii logati.\n \
+!editpost       - Editeaza o postare.\n \
+!editprofile    - Editeaza propriul profil.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
@@ -109,11 +115,23 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 #define T_LOGOUT_SUCCES \
 "Logout cu succes.\n"
 
+#define T_SENT_FRIEND_REQ_SUCCES \
+"Cerere de prietenie trimisa.\n"
+
+#define T_SENT_FRIEND_REQ_FAIL \
+"Cererea de prietenie nu a fost trimisa. Date gresite.\n"
+
 #define T_POST_TEXT \
 "Textul postarii (max. 100 caractere): "
 
 #define T_POST_ID \
 "ID-ul postarii: "
+
+#define T_USER_ID \
+"ID-ul utilizatorului: "
+
+#define T_USER_TYPE \
+"Tipul de prietenie (1 - friends, 2 - close friends): "
 
 #define T_POST_VISIBILITY \
 "Vizibilitate postare (0 - public, 1 - friends, 2 - close friends): "
