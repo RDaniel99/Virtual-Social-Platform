@@ -65,7 +65,9 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 !deletepost     - Sterge o postare.\n \
 !online         - Afiseaza utilizatorii logati.\n \
 !editpost       - Editeaza o postare.\n \
-!editprofile    - Editeaza propriul profil.\n"
+!editprofile    - Editeaza propriul profil.\n \
+!addfriend      - Adauga un prieten.\n \
+!requests       - Afiseaza cererile de prietenie primite.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
@@ -81,6 +83,9 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 
 #define T_NO_POST_TO_SHOW \
 "Nicio postare de afisat.\n"
+
+#define T_NO_FRIEND_REQ \
+"Nicio cerere de prietenie fara raspuns.\n"
 
 #define T_REGISTER_FAIL \
 "Inregistrare esuata: Date gresite\n"

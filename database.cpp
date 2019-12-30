@@ -23,28 +23,35 @@ struct postinfo
     int postAuthor;
 };
 
-vector<postinfo>    db_posts;
-vector<userinfo>    db_users;
-int                 db_callbackAns;
+struct friendshipinfo
+{
+    int idSender;
+    int type;
+};
+
+vector<friendshipinfo>  db_friends;
+vector<postinfo>        db_posts;
+vector<userinfo>        db_users;
+int                     db_callbackAns;
 
 // Users Table
-string              db_username;
-string              db_password;
-int                 db_isAdmin;
-int                 db_isOnline;
-int                 db_isPrivate;
+string                  db_username;
+string                  db_password;
+int                     db_isAdmin;
+int                     db_isOnline;
+int                     db_isPrivate;
 
-int                 db_id;
+int                     db_id;
 // Posts Table
-string              db_posttext;
-int                 db_authorid;
-int                 db_visibility;
+string                  db_posttext;
+int                     db_authorid;
+int                     db_visibility;
 
 //  Friendship Table
-int                 db_friendId1;
-int                 db_friendId2;
-int                 db_typefriendship;
-int                 db_isaccepted;
+int                     db_friendId1;
+int                     db_friendId2;
+int                     db_typefriendship;
+int                     db_isaccepted;
 
 bool createDatabasePosts()
 {
@@ -127,7 +134,7 @@ bool createDatabaseFriendships()
         DB_OPEN_FRIENDSHIPS_ERROR
 
     char const *sql =   "DROP TABLE IF EXISTS Friendships;" 
-                        "CREATE TABLE Friendships(IDSender INT, IdReciever INT, TypeFriends INT, IsAccepted INT);" 
+                        "CREATE TABLE Friendships(IdSender INT, IdReciever INT, TypeFriends INT, IsAccepted INT);" 
                         "INSERT INTO Friendships VALUES(1, 4, 1, 1);" 
                         "INSERT INTO Friendships VALUES(2, 1, 2, 0);" 
                         "INSERT INTO Friendships VALUES(2, 4, 2, 1);";
@@ -199,7 +206,7 @@ bool updateUser(char *nume, char *pass, int privacy, int userid)
     return true;
 }
 
-bool insertUser(char *nume, char* pass, int isAdmin, int privacy)
+bool addUser(char *nume, char* pass, int isAdmin, int privacy)
 {
     bool ok = true;
     
@@ -261,6 +268,7 @@ bool loginUser(char *nume, char* pass)
     ok = ok & existsName(nume);
     ok = ok & (db_username == usr);
     ok = ok & (db_password == pswd);
+    ok = ok & (db_isOnline == 0);
 
     return ok;
 }
@@ -621,7 +629,7 @@ bool addPost(char *postText, int ownerid, int visibility)
     return true;
 }
 
-bool editPost(int postid, char *postText, int ownerid, int visibility)
+bool updatePost(int postid, char *postText, int ownerid, int visibility)
 {
     bool ok = true;
 
@@ -773,6 +781,71 @@ bool addFriend(int senderId, int recieverId, int type)
     return true;
 }
 
+bool getName(int userid, char *msg)
+{
+    strcpy(msg, "");
+    
+    if(existsId(userid, 1))
+        strcpy(msg, db_username.c_str());
+
+    return strlen(msg) > 0;
+}
+
+bool getFriendReq(int userid, char *msg)
+{
+    db_friends.clear();
+
+    if(!existsId(userid, 1))
+        return false;
+    
+    string sql = "";
+    sql += "SELECT * FROM Friendships WHERE IsAccepted = 0 AND IdReciever = ";
+    sql += std::to_string(userid);
+    sql += ";";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    db_friendId2 = db_friendId1 = 0;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_FRIENDSHIPS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectRequests, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_FRIENDSHIPS_ERROR
+
+    sqlite3_close(db);
+
+    if(db_friends.size() == 0)
+        return false;
+    
+    string ans = "";
+
+    for(unsigned int i = 0; i < db_friends.size(); i++)
+    {
+        string toAdd = "";
+        toAdd += "Sender: ";
+        getName(db_friends[i].idSender, msg);
+        toAdd += msg;
+        toAdd += "| Type: ";
+        toAdd += (db_friends[i].type == 1 ? "1 (friends)\n" : "2 (close-friends)\n");
+
+        ans += toAdd;
+    }
+
+    strcpy(msg, "");
+    strcpy(msg, ans.c_str());
+
+    return true;
+}
+
 bool getPosts(int userid, char *msg, bool areAll)
 {
     db_posts.clear();
@@ -820,7 +893,8 @@ bool getPosts(int userid, char *msg, bool areAll)
         toAppend += "| ";
         
         toAppend += "AuthorId: ";
-        toAppend += std::to_string(db_posts[i].postAuthor);
+        getName(db_posts[i].postAuthor, msg);
+        toAppend += msg;
         toAppend += ";\n";
 
         ans += toAppend;
@@ -967,6 +1041,20 @@ int callbackCollectAllPosts(void *NotUsed, int argc, char **argv, char **azColNa
     toAdd.postAuthor = atoi(argv[2]);
 
     db_posts.push_back(toAdd);
+
+    return 0;
+}
+
+int callbackCollectRequests(void *NotUsed, int argc, char **argv, char **azColName)
+{
+    if(argc)
+    {
+        friendshipinfo toAdd;
+        toAdd.idSender = atoi(argv[0]);
+        toAdd.type = atoi(argv[2]);
+
+        db_friends.push_back(toAdd);
+    }
 
     return 0;
 }

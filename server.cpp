@@ -27,23 +27,24 @@ char msgrasp[1000] = " ";
 int socketDescriptor;
 int client;
 
-void waitClosedChild(int sig);
-bool ExecuteCommand(int commandId);
+void    waitClosedChild(int sig);
+int     TestUserId();
+bool    ExecuteCommand(int commandId);
 
-bool UnknownCommand();              // commandId = 0
-bool HelpCommand();                 // commandId = 1
-bool QuitCommand();                 // commandId = 2
-bool RegisterCommand(int isAdmin);  // commandId = 3 sau 7
-bool LoginCommand();                // commandId = 4
-bool LogoutCommand();               // commandId = 5
-bool ShowPostsCommand();            // commandId = 6
-bool AddPostCommand();              // commandId = 8
-bool DeletePostCommand();           // commandId = 9
-bool OnlineCommand();               // commandId = 10
-bool EditPostCommand();             // commandId = 11
-bool EditProfileCommand();          // commandId = 12
-bool AddFriendCommand();            // commandId = 13
-bool RequestsCommand();             // commandId = 14
+bool    UnknownCommand();              // commandId = 0
+bool    HelpCommand();                 // commandId = 1
+bool    QuitCommand();                 // commandId = 2
+bool    RegisterCommand(int isAdmin);  // commandId = 3 sau 7
+bool    LoginCommand();                // commandId = 4
+bool    LogoutCommand();               // commandId = 5
+bool    ShowPostsCommand();            // commandId = 6
+bool    AddPostCommand();              // commandId = 8
+bool    DeletePostCommand();           // commandId = 9
+bool    OnlineCommand();               // commandId = 10
+bool    EditPostCommand();             // commandId = 11
+bool    EditProfileCommand();          // commandId = 12
+bool    AddFriendCommand();            // commandId = 13
+bool    RequestsCommand();             // commandId = 14
 
 int main()
 {
@@ -107,6 +108,32 @@ int main()
     }
 
     return 0;
+}
+
+int TestUserId()
+{
+    int clientId = - 1;
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    int testResult = 1;
+
+    if(clientId == -1)
+        testResult = 0;
+        
+    if(write(client, &testResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testResult == 0)
+    {
+        strcpy(msg, "");
+        strcpy(msg, T_NEED_LOGIN);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+    }
+
+    return clientId;
 }
 
 void waitClosedChild(int sig)
@@ -267,7 +294,7 @@ bool RegisterCommand(int isAdmin)
     nume[strlen(nume) - 1] = 0;
     pass[strlen(pass) - 1] = 0;
         
-    if(insertUser(nume, pass, isAdmin, privacy))
+    if(addUser(nume, pass, isAdmin, privacy))
         msgId = 4;
     else
         msgId = 3;
@@ -397,28 +424,9 @@ bool AddPostCommand()
 {
     int msgId = 9;
 
-    int clientId = - 1;
-    if(read(client, &clientId, 4) <= 0)
-        S_READ_ERROR
-
-    int testResult = 1;
-
+    int clientId = TestUserId();
     if(clientId == -1)
-        testResult = 0;
-        
-    if(write(client, &testResult, 4) < 0)
-        S_WRITE_ERROR
-
-    if(testResult == 0)
-    {
-        strcpy(msg, "");
-        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
-
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
         return true;
-    }
 
     strcpy(msg, "");
     strcpy(msg, T_POST_TEXT);
@@ -476,28 +484,9 @@ bool DeletePostCommand()
 {
     int msgId = 11;
 
-    int clientId = - 1;
-    if(read(client, &clientId, 4) <= 0)
-        S_READ_ERROR
-
-    int testResult = 1;
-
+    int clientId = TestUserId();
     if(clientId == -1)
-        testResult = 0;
-        
-    if(write(client, &testResult, 4) < 0)
-        S_WRITE_ERROR
-
-    if(testResult == 0)
-    {
-        strcpy(msg, "");
-        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
-
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
         return true;
-    }
 
     strcpy(msg, "");
     strcpy(msg, T_POST_ID);
@@ -540,28 +529,9 @@ bool DeletePostCommand()
 
 bool OnlineCommand()
 {
-    int clientId = - 1;
-    if(read(client, &clientId, 4) <= 0)
-        S_READ_ERROR
-
-    int testResult = 1;
-
+    int clientId = TestUserId();
     if(clientId == -1)
-        testResult = 0;
-        
-    if(write(client, &testResult, 4) < 0)
-        S_WRITE_ERROR
-
-    if(testResult == 0)
-    {
-        strcpy(msg, "");
-        strcpy(msg, T_NEED_LOGIN);
-
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
         return true;
-    }
 
     strcpy(msg, "");
     if(!getOnline(msg))
@@ -577,28 +547,9 @@ bool EditPostCommand()
 {
     int msgId = 13;
 
-    int clientId = - 1;
-    if(read(client, &clientId, 4) <= 0)
-        S_READ_ERROR
-
-    int testResult = 1;
-
+    int clientId = TestUserId();
     if(clientId == -1)
-        testResult = 0;
-        
-    if(write(client, &testResult, 4) < 0)
-        S_WRITE_ERROR
-
-    if(testResult == 0)
-    {
-        strcpy(msg, "");
-        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
-
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
         return true;
-    }
 
     strcpy(msg, "");
     strcpy(msg, T_POST_ID);
@@ -664,7 +615,7 @@ bool EditPostCommand()
     msg[strlen(msg) - 1] = 0;
     visibility = atoi(msg);
 
-    if(editPost(idPost, textPostare, clientId, visibility))
+    if(updatePost(idPost, textPostare, clientId, visibility))
         msgId = 14;
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
@@ -682,28 +633,9 @@ bool EditProfileCommand()
 {
     int msgId = 15;
 
-    int clientId = - 1;
-    if(read(client, &clientId, 4) <= 0)
-        S_READ_ERROR
-
-    int testResult = 1;
-
+    int clientId = TestUserId();
     if(clientId == -1)
-        testResult = 0;
-        
-    if(write(client, &testResult, 4) < 0)
-        S_WRITE_ERROR
-
-    if(testResult == 0)
-    {
-        strcpy(msg, "");
-        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
-
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
         return true;
-    }
 
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_NAME);
@@ -773,28 +705,9 @@ bool AddFriendCommand()
 {
     int msgId = 17;
 
-    int clientId = - 1;
-    if(read(client, &clientId, 4) <= 0)
-        S_READ_ERROR
-
-    int testResult = 1;
-
+    int clientId = TestUserId();
     if(clientId == -1)
-        testResult = 0;
-        
-    if(write(client, &testResult, 4) < 0)
-        S_WRITE_ERROR
-
-    if(testResult == 0)
-    {
-        strcpy(msg, "");
-        strcpy(msg, T_NEED_LOGIN);
-
-        if(write(client, msg, 1000) < 0)
-            S_WRITE_ERROR
-
         return true;
-    }
 
     strcpy(msg, "");
     strcpy(msg, T_USER_ID);
@@ -858,5 +771,16 @@ bool AddFriendCommand()
 
 bool RequestsCommand()
 {
-    return true;
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    strcpy(msg, "");
+    if(!getFriendReq(clientId, msg))
+        strcpy(msg, T_NO_FRIEND_REQ);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    return 0;
 }

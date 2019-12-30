@@ -22,21 +22,22 @@ int clientId = -1;
 
 int     GetCommand(char *msg);
 bool    ExecuteCommand(int commandId);
+bool    PassTestId();
 
-bool UnknownCommand();              // commandId = 0
-bool HelpCommand();                 // commandId = 1
-bool QuitCommand();                 // commandId = 2
-bool RegisterCommand(int isAdmin);  // commandId = 3 sau 7
-bool LoginCommand();                // commandId = 4
-bool LogoutCommand();               // commandId = 5
-bool ShowPostsCommand();            // commandId = 6
-bool AddPostCommand();              // commandId = 8
-bool DeletePostCommand();           // commandId = 9
-bool OnlineCommand();               // commandId = 10
-bool EditPostCommand();             // commandId = 11
-bool EditProfileCommand();          // commandId = 12
-bool AddFriendCommand();            // commandId = 13
-bool RequestsCommand();             // commandId = 14
+bool    UnknownCommand();              // commandId = 0
+bool    HelpCommand();                 // commandId = 1
+bool    QuitCommand();                 // commandId = 2
+bool    RegisterCommand(int isAdmin);  // commandId = 3 sau 7
+bool    LoginCommand();                // commandId = 4
+bool    LogoutCommand();               // commandId = 5
+bool    ShowPostsCommand();            // commandId = 6
+bool    AddPostCommand();              // commandId = 8
+bool    DeletePostCommand();           // commandId = 9
+bool    OnlineCommand();               // commandId = 10
+bool    EditPostCommand();             // commandId = 11
+bool    EditProfileCommand();          // commandId = 12
+bool    AddFriendCommand();            // commandId = 13
+bool    RequestsCommand();             // commandId = 14
 
 int main(int argc, char **argv)
 {
@@ -67,6 +68,29 @@ int main(int argc, char **argv)
         int commandId = GetCommand(msg);
         bool ok = ExecuteCommand(commandId);
     }
+}
+
+bool PassTestId()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    int testId = -1;
+
+    if(read(socketDescriptorToServer, &testId, 4) <= 0)
+        C_READ_ERROR
+
+    if(!testId)
+    {
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)
+            C_READ_ERROR
+
+        printf("%s\n", msg);
+
+        return false;
+    }
+
+    return true;
 }
 
 int GetCommand(char *msg)
@@ -283,24 +307,10 @@ bool ShowPostsCommand()
 
 bool AddPostCommand()
 {
-    if(write(socketDescriptorToServer, &clientId, 4) < 0)
-        C_WRITE_ERROR
-
-    int testId = -1;
-
-    if(read(socketDescriptorToServer, &testId, 4) <= 0)
-        C_READ_ERROR
-
-    if(!testId)
-    {
-        if(read(socketDescriptorToServer, msg, 1000) <= 0)
-            C_READ_ERROR
-
-        printf("%s\n", msg);
-
+    if(!PassTestId())
         return true;
-    }
 
+    // post text
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -310,6 +320,7 @@ bool AddPostCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    // post type
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -319,6 +330,7 @@ bool AddPostCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    // result
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -329,24 +341,10 @@ bool AddPostCommand()
 
 bool DeletePostCommand()
 {
-    if(write(socketDescriptorToServer, &clientId, 4) < 0)
-        C_WRITE_ERROR
-
-    int testId = -1;
-
-    if(read(socketDescriptorToServer, &testId, 4) <= 0)
-        C_READ_ERROR
-
-    if(!testId)
-    {
-        if(read(socketDescriptorToServer, msg, 1000) <= 0)
-            C_READ_ERROR
-
-        printf("%s\n", msg);
-
+    if(!PassTestId())
         return true;
-    }
 
+    // post id
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -356,6 +354,7 @@ bool DeletePostCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    // result
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -366,23 +365,8 @@ bool DeletePostCommand()
 
 bool OnlineCommand()
 {
-    if(write(socketDescriptorToServer, &clientId, 4) < 0)
-        C_WRITE_ERROR
-
-    int testId = -1;
-
-    if(read(socketDescriptorToServer, &testId, 4) <= 0)
-        C_READ_ERROR
-
-    if(!testId)
-    {
-        if(read(socketDescriptorToServer, msg, 1000) <= 0)
-            C_READ_ERROR
-
-        printf("%s\n", msg);
-
+    if(!PassTestId())
         return true;
-    }
 
     if(read(socketDescriptorToServer, msg, 1000) < 0)
         C_READ_ERROR
@@ -394,24 +378,10 @@ bool OnlineCommand()
 
 bool EditPostCommand()
 {
-    if(write(socketDescriptorToServer, &clientId, 4) < 0)
-        C_WRITE_ERROR
-
-    int testId = -1;
-
-    if(read(socketDescriptorToServer, &testId, 4) <= 0)
-        C_READ_ERROR
-
-    if(!testId)
-    {
-        if(read(socketDescriptorToServer, msg, 1000) <= 0)
-            C_READ_ERROR
-
-        printf("%s\n", msg);
-
+    if(!PassTestId())
         return true;
-    }
 
+    // Post Id
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -421,6 +391,7 @@ bool EditPostCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    // Post text
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -430,6 +401,7 @@ bool EditPostCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    // Post Type
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -439,6 +411,7 @@ bool EditPostCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    // Result
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -449,23 +422,8 @@ bool EditPostCommand()
 
 bool EditProfileCommand()
 {
-    if(write(socketDescriptorToServer, &clientId, 4) < 0)
-        C_WRITE_ERROR
-
-    int testId = -1;
-
-    if(read(socketDescriptorToServer, &testId, 4) <= 0)
-        C_READ_ERROR
-
-    if(!testId)
-    {
-        if(read(socketDescriptorToServer, msg, 1000) <= 0)
-            C_READ_ERROR
-
-        printf("%s\n", msg);
-
+    if(!PassTestId())
         return true;
-    }
 
     // Nume
     fflush(stdout);
@@ -497,6 +455,7 @@ bool EditProfileCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    // Rezultat
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
@@ -556,5 +515,16 @@ bool AddFriendCommand()
 
 bool RequestsCommand()
 {
+    if(!PassTestId())
+        return true;
+
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
+    
+    if(write(0, msg, 1000) < 0)
+        C_WRITE_ERROR
+    
     return true;
 }
