@@ -34,6 +34,7 @@ bool AddPostCommand();              // commandId = 8
 bool DeletePostCommand();           // commandId = 9
 bool OnlineCommand();               // commandId = 10
 bool EditPostCommand();             // commandId = 11
+bool EditProfileCommand();          // commandId = 12
 
 
 int main(int argc, char **argv)
@@ -86,6 +87,7 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "deletepost\n") == 0)    return ECDeletePost;
     if(strcmp(msg + 1, "online\n") == 0)        return ECOnline;
     if(strcmp(msg + 1, "editpost\n") == 0)      return ECEditPost;
+    if(strcmp(msg + 1, "editprofile\n") == 0)   return ECEditProfile;
 
     return ECUnknown;
 }
@@ -109,6 +111,7 @@ bool ExecuteCommand(int commandId)
         case ECDeletePost:  return DeletePostCommand();
         case ECOnline:      return OnlineCommand();
         case ECEditPost:    return EditPostCommand();
+        case ECEditProfile: return EditProfileCommand();
     }
 
     return false;
@@ -184,6 +187,17 @@ bool RegisterCommand(int isAdmin)
     // Transmitere Pass
     bzero(msg, 1000);
     if(read(0, msg, 1000) <= 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
+
+    // Mesaj cu Privacy
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)    C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                          C_WRITE_ERROR
+
+    // Transmitere Privacy
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                           C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)   C_WRITE_ERROR
 
     if(read(socketDescriptorToServer, msg, 1000) < 0)
@@ -411,6 +425,64 @@ bool EditPostCommand()
     if(read(0, msg, 1000) < 0)                          C_READ_ERROR
     if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
 
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    return true;
+}
+
+bool EditProfileCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    int testId = -1;
+
+    if(read(socketDescriptorToServer, &testId, 4) <= 0)
+        C_READ_ERROR
+
+    if(!testId)
+    {
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)
+            C_READ_ERROR
+
+        printf("%s\n", msg);
+
+        return true;
+    }
+
+    // Nume
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    // Parola
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
+    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
+    if(write(socketDescriptorToServer, msg, 1000) < 0)  C_WRITE_ERROR
+
+    // Tip de cont
     fflush(stdout);
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR

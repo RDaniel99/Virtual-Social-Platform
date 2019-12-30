@@ -41,6 +41,7 @@ bool AddPostCommand();              // commandId = 8
 bool DeletePostCommand();           // commandId = 9
 bool OnlineCommand();               // commandId = 10
 bool EditPostCommand();             // commandId = 11
+bool EditProfileCommand();          // commandId = 12
 
 int main()
 {
@@ -127,6 +128,7 @@ bool ExecuteCommand(int commandId)
         case ECDeletePost:  return DeletePostCommand();
         case ECOnline:      return OnlineCommand();
         case ECEditPost:    return EditPostCommand();
+        case ECEditProfile: return EditProfileCommand();
     }
 
     return false;
@@ -211,9 +213,6 @@ bool RegisterCommand(int isAdmin)
     if(read(client, &testAdmin, 4) < 0)
         S_READ_ERROR
 
-    if(testAdmin != isAdmin)
-        S_UNLINK_FUNCTIONS
-    
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_NAME);
 
@@ -234,11 +233,37 @@ bool RegisterCommand(int isAdmin)
     if(read(client, pass, 1000) <= 0)
         S_READ_ERROR
 
+    int privacy = 0;
+
+    strcpy(msg, "");
+    strcpy(msg, T_REGISTER_PRIVACY);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+    
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+    
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if(msg[i] < '0' || msg[i] > '9')
+        {
+            strcpy(msg, "");
+
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+            
+            return 0;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    privacy = atoi(msg);
     // Se elimina \n de la final
     nume[strlen(nume) - 1] = 0;
     pass[strlen(pass) - 1] = 0;
         
-    if(insertUser(nume, pass, isAdmin))
+    if(insertUser(nume, pass, isAdmin, privacy))
         msgId = 4;
     else
         msgId = 3;
@@ -645,6 +670,97 @@ bool EditPostCommand()
 
     if(msgId == 14)
         S_POST_EDITED
+
+    return true;
+}
+
+bool EditProfileCommand()
+{
+    int msgId = 15;
+
+    int clientId = - 1;
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    int testResult = 1;
+
+    if(clientId == -1)
+        testResult = 0;
+        
+    if(write(client, &testResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testResult == 0)
+    {
+        strcpy(msg, "");
+        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+
+    strcpy(msg, "");
+    strcpy(msg, T_REGISTER_NAME);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char nume[1000];
+    if(read(client, nume, 1000) <= 0)
+        S_READ_ERROR
+
+    strcpy(msg, "");
+    strcpy(msg, T_REGISTER_PASS);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char pass[1000];
+    if(read(client, pass, 1000) <= 0)
+        S_READ_ERROR
+
+    strcpy(msg, "");
+    strcpy(msg, T_REGISTER_PRIVACY);
+
+    int privacy = 0;
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if(msg[i] < '0' || msg[i] > '9')
+        {
+            strcpy(msg, "");
+
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+
+    msg[strlen(msg) - 1] = 0;
+    privacy = atoi(msg);
+    // Se elimina \n de la final
+    nume[strlen(nume) - 1] = 0;
+    pass[strlen(pass) - 1] = 0;
+    
+    if(updateUser(nume, pass, privacy, clientId))
+        msgId = 16;
+
+    strcpy(msg, "");
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
 
     return true;
 }

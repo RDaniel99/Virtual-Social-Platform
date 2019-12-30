@@ -155,13 +155,58 @@ bool createDatabases()
     return ok;
 }
 
-bool insertUser(char *nume, char* pass, int isAdmin)
+bool updateUser(char *nume, char *pass, int privacy, int userid)
+{
+    bool ok = true;
+    
+    ok = ok & validateName(nume);
+    ok = ok & validatePass(pass);
+    ok = ok & validatePrivacy(privacy);
+
+    if(!ok)
+        return false;
+
+    string sql = "UPDATE Users SET UserName = '";
+    sql += nume;
+    sql += "', UserPass = '";
+    sql += pass;
+    sql += "', UserPrivacy = ";
+    sql += std::to_string(privacy);
+    sql += " WHERE UserId = ";
+    sql += std::to_string(userid);
+    sql += ";";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_USER_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_UPDATE_USER_ERROR
+
+    sqlite3_close(db);
+
+    DB_UPDATE_USER_OK
+
+    return true;
+}
+
+bool insertUser(char *nume, char* pass, int isAdmin, int privacy)
 {
     bool ok = true;
     
     ok = ok & validateName(nume);
     ok = ok & validatePass(pass);
     ok = ok & validateAdmin(isAdmin);
+    ok = ok & validatePrivacy(privacy);
 
     if(!ok)
         return false;
@@ -177,7 +222,9 @@ bool insertUser(char *nume, char* pass, int isAdmin)
     sql += pass;
     sql += "', ";
     sql += (isAdmin ? '1' : '0');
-    sql += ", 0, 0);";
+    sql += ", 0, ";
+    sql += (privacy ? '1' : '0');
+    sql += ");";
     
     DB_SQL_COMMAND
 
@@ -465,6 +512,11 @@ bool validateAdmin(int isAdmin)
         return false;
     
     return true;
+}
+
+bool validatePrivacy(int privacy)
+{
+    return (privacy == 0 || privacy == 1);
 }
 
 bool areFriends(int id1, int id2, int accepted)

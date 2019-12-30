@@ -17,7 +17,9 @@ enum EMesaje
     EMDeletePostFail,
     EMDeletePostSucces,
     EMEditPostFail,
-    EMEditPostSucces
+    EMEditPostSucces,
+    EMEditProfileFail,
+    EMEditProfileSucces
 };
 
 enum EComenzi
@@ -33,7 +35,8 @@ enum EComenzi
     ECAddPost,
     ECDeletePost,
     ECOnline,
-    ECEditPost
+    ECEditPost,
+    ECEditProfile
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -85,6 +88,9 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 #define T_REGISTER_PASS \
 "Alegeti o parola (minim 4 caractere): "
 
+#define T_REGISTER_PRIVACY \
+"Tip de cont (0 - public, 1 - privat): "
+
 #define T_LOGIN_NAME \
 "Nume: "
 
@@ -130,6 +136,12 @@ postarea nu exista / nu sunteti conectat.\n"
 
 #define T_EDIT_POST_SUCCES \
 "Postarea a fost editata cu succes!\n"
+
+#define T_EDIT_PROFILE_FAIL \
+"Profilul nu a fost editat. Date gresite / nu sunteti conectat.\n"
+
+#define T_EDIT_PROFILE_SUCCES \
+"Profilul a fost editat cu succes.\n"
 
 #endif
 
@@ -307,6 +319,9 @@ printf("[DATABASE] Tabela Users creata cu succes\n");
 #define DB_INSERT_USER_OK \
 printf("[DATABASE] Userul %s cu parola %s s-a inregistrat cu succes in tabela Users\n", nume, pass);\
 printf("[DATABASE] User Id = %d\n", db_nextId);
+
+#define DB_UPDATE_USER_OK \
+printf("[DATABASE] Userul cu ID = %d si-a actualizat profilul.\n", userid);
 
 #define DB_CREATE_POST_ERROR \
 {\
