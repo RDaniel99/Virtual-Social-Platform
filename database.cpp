@@ -177,7 +177,7 @@ bool insertUser(char *nume, char* pass, int isAdmin)
     sql += pass;
     sql += "', ";
     sql += (isAdmin ? '1' : '0');
-    sql += ", 0);";
+    sql += ", 0, 0);";
     
     DB_SQL_COMMAND
 
@@ -521,7 +521,6 @@ bool validateOwnerId(int ownerid)
 
 bool validateVisibility(int visibility)
 {
-    printf("vis: %d\n", visibility);
     return (0 <= visibility && visibility <= 2);
 }
 
@@ -548,6 +547,65 @@ bool addPost(char *postText, int ownerid, int visibility)
     sql += ", ";
     sql += std::to_string(visibility);
     sql += ");";
+    
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_POSTS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_POSTS_ERROR
+
+    sqlite3_close(db);
+
+    return true;
+}
+
+bool editPost(int postid, char *postText, int ownerid, int visibility)
+{
+    bool ok = true;
+
+    ok = ok & validatePostText(postText);
+    ok = ok & validateOwnerId(ownerid);
+    ok = ok & validateVisibility(visibility);
+
+    if(!ok)
+        return false;
+
+    char tmp[1000];
+    getPosts(ownerid, tmp, true);
+
+    ok = false;
+    for(int i = 0; i < db_posts.size(); i++)
+    {
+        if(db_posts[i].postId == postid && db_posts[i].postAuthor == ownerid)
+        {
+            ok = true;
+            break;
+        }
+    }
+
+    if(!ok)
+        return false;
+
+    string sql = "";
+    sql += "UPDATE Posts SET PostText = '";
+    sql += postText;
+    sql += "', PostVisibility = ";
+    sql += std::to_string(visibility);
+    sql += " WHERE PostId = ";
+    sql += std::to_string(postid);
+    sql += " AND OwnerId = ";
+    sql += std::to_string(ownerid);
+    sql += ";";
     
     DB_SQL_COMMAND
 
@@ -621,7 +679,7 @@ bool isUserAdmin(int userid)
     return db_isAdmin;
 }
 
-bool getPosts(int userid, char *msg)
+bool getPosts(int userid, char *msg, bool areAll)
 {
     db_posts.clear();
 
@@ -641,7 +699,11 @@ bool getPosts(int userid, char *msg)
     if(exitCode != SQLITE_OK)
         DB_OPEN_POSTS_ERROR
 
-    exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectPosts, 0, &err);
+    if(!areAll)
+        exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectPosts, 0, &err);
+    else
+        exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectAllPosts, 0, &err);
+    
 
     if(exitCode != SQLITE_OK)
         DB_SELECT_POSTS_ERROR
@@ -796,6 +858,21 @@ int callbackCollectOnline(void *NotUsed, int argc, char **argv, char **azColName
 
         db_users.push_back(toAdd);
     }
+
+    return 0;
+}
+
+int callbackCollectAllPosts(void *NotUsed, int argc, char **argv, char **azColName) 
+{
+    NotUsed = 0;
+    
+    postinfo toAdd;
+    toAdd.postId = atoi(argv[0]);
+    toAdd.postText = "";
+    toAdd.postText += argv[1];
+    toAdd.postAuthor = atoi(argv[2]);
+
+    db_posts.push_back(toAdd);
 
     return 0;
 }

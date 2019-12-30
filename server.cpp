@@ -40,6 +40,7 @@ bool ShowPostsCommand();            // commandId = 6
 bool AddPostCommand();              // commandId = 8
 bool DeletePostCommand();           // commandId = 9
 bool OnlineCommand();               // commandId = 10
+bool EditPostCommand();             // commandId = 11
 
 int main()
 {
@@ -125,6 +126,7 @@ bool ExecuteCommand(int commandId)
         case ECAddPost:     return AddPostCommand();
         case ECDeletePost:  return DeletePostCommand();
         case ECOnline:      return OnlineCommand();
+        case ECEditPost:    return EditPostCommand();
     }
 
     return false;
@@ -538,6 +540,111 @@ bool OnlineCommand()
 
     if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR
+
+    return true;
+}
+
+bool EditPostCommand()
+{
+    int msgId = 13;
+
+    int clientId = - 1;
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    int testResult = 1;
+
+    if(clientId == -1)
+        testResult = 0;
+        
+    if(write(client, &testResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testResult == 0)
+    {
+        strcpy(msg, "");
+        ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+
+    strcpy(msg, "");
+    strcpy(msg, T_POST_ID);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    int idPost = 0;
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] && msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    idPost = atoi(msg);
+
+    strcpy(msg, "");
+    strcpy(msg, T_POST_TEXT);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    char textPostare[1000];
+    if(read(client, textPostare, 1000) < 0)
+        S_READ_ERROR
+
+    textPostare[strlen(textPostare) - 1] = 0;
+
+    strcpy(msg, "");
+    strcpy(msg, T_POST_VISIBILITY);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    int visibility;
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] && msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    visibility = atoi(msg);
+
+    if(editPost(idPost, textPostare, clientId, visibility))
+        msgId = 14;
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    if(msgId == 14)
+        S_POST_EDITED
 
     return true;
 }

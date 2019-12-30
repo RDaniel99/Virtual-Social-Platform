@@ -15,7 +15,9 @@ enum EMesaje
     EMAddPostFail,
     EMAddPostSucces,
     EMDeletePostFail,
-    EMDeletePostSucces
+    EMDeletePostSucces,
+    EMEditPostFail,
+    EMEditPostSucces
 };
 
 enum EComenzi
@@ -30,7 +32,8 @@ enum EComenzi
     ECRegisterA,
     ECAddPost,
     ECDeletePost,
-    ECOnline
+    ECOnline,
+    ECEditPost
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -121,6 +124,12 @@ postarea nu exista / nu sunteti conectat.\n"
 
 #define T_DELETE_POST_SUCCES \
 "Postarea a fost stearsa cu succes!\n"
+
+#define T_EDIT_POST_FAIL \
+"Postarea nu a fost editata. Nu este postarea Dvs / postarea nu exista / nu sunteti conectat.\n"
+
+#define T_EDIT_POST_SUCCES \
+"Postarea a fost editata cu succes!\n"
 
 #endif
 
@@ -233,6 +242,9 @@ printf("[SERVER] Clientul cu ID = %d s-a deconectat.\n", clientLoggedOut);
 
 #define S_NEW_POST \
 printf("[SERVER] Postare noua!\n");
+
+#define S_POST_EDITED \
+printf("[SERVER] Postarea cu ID = %d editata\n", idPost);
 
 #define S_NEW_CLIENT \
 printf("[SERVER] Client nou!\n");
