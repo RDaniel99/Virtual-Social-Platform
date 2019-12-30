@@ -71,7 +71,9 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 !editpost       - Editeaza o postare.\n \
 !editprofile    - Editeaza propriul profil.\n \
 !addfriend      - Adauga un prieten.\n \
-!requests       - Afiseaza cererile de prietenie primite.\n"
+!requests       - Afiseaza cererile de prietenie primite.\n \
+!showfriends    - Afiseaza prietenii.\n \
+!removefriend   - Sterge un prieten.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
