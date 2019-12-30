@@ -32,6 +32,7 @@ bool LogoutCommand();               // commandId = 5
 bool ShowPostsCommand();            // commandId = 6
 bool AddPostCommand();              // commandId = 8
 bool DeletePostCommand();           // commandId = 9
+bool OnlineCommand();               // commandId = 10
 
 
 int main(int argc, char **argv)
@@ -82,6 +83,7 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "registera\n") == 0)     return ECRegisterA;
     if(strcmp(msg + 1, "addpost\n") == 0)       return ECAddPost;
     if(strcmp(msg + 1, "deletepost\n") == 0)    return ECDeletePost;
+    if(strcmp(msg + 1, "online\n") == 0)        return ECOnline;
 
     return ECUnknown;
 }
@@ -103,6 +105,7 @@ bool ExecuteCommand(int commandId)
         case ECRegisterA:   return RegisterCommand(1);
         case ECAddPost:     return AddPostCommand();
         case ECDeletePost:  return DeletePostCommand();
+        case ECOnline:      return OnlineCommand();
     }
 
     return false;
@@ -335,6 +338,34 @@ bool DeletePostCommand()
     bzero(msg, 1000);
     if(read(socketDescriptorToServer, msg, 1000) < 0)   C_READ_ERROR
     if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+
+    return true;
+}
+
+bool OnlineCommand()
+{
+    if(write(socketDescriptorToServer, &clientId, 4) < 0)
+        C_WRITE_ERROR
+
+    int testId = -1;
+
+    if(read(socketDescriptorToServer, &testId, 4) <= 0)
+        C_READ_ERROR
+
+    if(!testId)
+    {
+        if(read(socketDescriptorToServer, msg, 1000) <= 0)
+            C_READ_ERROR
+
+        printf("%s\n", msg);
+
+        return true;
+    }
+
+    if(read(socketDescriptorToServer, msg, 1000) < 0)
+        C_READ_ERROR
+
+    printf("%s\n", msg);
 
     return true;
 }

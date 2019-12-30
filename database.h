@@ -15,6 +15,7 @@ bool insertUser(char *nume, char* pass, int isAdmin = 0);
 bool loginUser(char *nume, char* pass);
 bool updateOn(int userid, int value);
 
+bool getOnline(char *msg);
 bool getPosts(int userid, char *msg);
 bool existsId(int id, int tabel);
 int computeNextId(int tabel);
@@ -33,5 +34,6 @@ int callbackCheckIfExists(void *, int, char **, char **);
 int callbackGetMaxId(void *, int, char **, char **);
 int callbackCollectPosts(void *, int, char **, char **);
 int callbackAreInFriends(void *, int, char **, char **);
+int callbackCollectOnline(void *, int, char **, char **);
 
 #endif //H_DATABASE

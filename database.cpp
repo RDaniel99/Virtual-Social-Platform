@@ -10,6 +10,12 @@
 
 using namespace std;
 
+struct userinfo
+{
+    int userId;
+    string userName;
+};
+
 struct postinfo
 {
     int postId;
@@ -18,6 +24,7 @@ struct postinfo
 };
 
 vector<postinfo>    db_posts;
+vector<userinfo>    db_users;
 int                 db_callbackAns;
 
 // Users Table
@@ -25,6 +32,7 @@ string              db_username;
 string              db_password;
 int                 db_isAdmin;
 int                 db_isOnline;
+int                 db_isPrivate;
 
 int                 db_id;
 // Posts Table
@@ -85,15 +93,15 @@ bool createDatabaseUsers()
         DB_OPEN_USER_ERROR
 
     char const *sql =   "DROP TABLE IF EXISTS Users;" 
-                        "CREATE TABLE Users(UserId INT, UserName TEXT, UserPass TEXT, UserAdmin INT, UserOnline INT);" 
-                        "INSERT INTO Users VALUES(1, 'Andrei', 'pass', 1, 0);" 
-                        "INSERT INTO Users VALUES(2, 'Cosmin', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(3, 'Ion', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(4, 'Ana', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(5, 'Maria', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(6, 'Radu', 'pass', 0, 0);" 
-                        "INSERT INTO Users VALUES(7, 'Razvan', 'pass', 0, 0);"
-                        "INSERT INTO Users VALUES(8, 'Georgiana', 'pass', 0, 0);";
+                        "CREATE TABLE Users(UserId INT, UserName TEXT, UserPass TEXT, UserAdmin INT, UserOnline INT, UserPrivacy INT);" 
+                        "INSERT INTO Users VALUES(1, 'Andrei', 'pass', 1, 0, 0);" 
+                        "INSERT INTO Users VALUES(2, 'Cosmin', 'pass', 0, 0, 0);" 
+                        "INSERT INTO Users VALUES(3, 'Ion', 'pass', 0, 0, 0);" 
+                        "INSERT INTO Users VALUES(4, 'Ana', 'pass', 0, 0, 0);" 
+                        "INSERT INTO Users VALUES(5, 'Maria', 'pass', 0, 0, 0);" 
+                        "INSERT INTO Users VALUES(6, 'Radu', 'pass', 0, 0, 0);" 
+                        "INSERT INTO Users VALUES(7, 'Razvan', 'pass', 0, 0, 0);"
+                        "INSERT INTO Users VALUES(8, 'Georgiana', 'pass', 0, 0, 0);";
         
     exitCode = sqlite3_exec(db, sql, 0, 0, &err);
 
@@ -208,6 +216,53 @@ bool loginUser(char *nume, char* pass)
     ok = ok & (db_password == pswd);
 
     return ok;
+}
+
+bool getOnline(char *msg)
+{
+    db_users.clear();
+
+    string sql = "";
+    sql += "SELECT * FROM Users WHERE UserOnline = 1 AND UserPrivacy = 0;";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_USER_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectOnline, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_USER_ERROR
+
+    sqlite3_close(db);
+
+    strcpy(msg, "");
+    if(db_users.size() == 0)
+        return false;
+
+    string ans = "";
+    for(unsigned int i = 0; i < db_users.size(); i++)
+    {
+        string toAdd = "";
+        toAdd += "Name: ";
+        toAdd += db_users[i].userName;
+        toAdd += " | ID: ";
+        toAdd += std::to_string(db_users[i].userId);
+
+        ans += toAdd;
+        ans += "\n";
+    }
+
+    strcpy(msg, ans.c_str());
+
+    return true;
 }
 
 int getIdFromLastSelect()
@@ -620,8 +675,8 @@ bool getPosts(int userid, char *msg)
     return true;
 }
 
-int callbackCheckIfExists(void *NotUsed, int argc, char **argv, 
-                    char **azColName) {
+int callbackCheckIfExists(void *NotUsed, int argc, char **argv, char **azColName) 
+{
     
     NotUsed = 0;
     
@@ -629,19 +684,21 @@ int callbackCheckIfExists(void *NotUsed, int argc, char **argv,
     {
         db_callbackAns = 1;
 
-        if(argc == 5)
+        if(argc == 6)
         {
             db_username = "";
             db_password = "";
             db_id = -1;
             db_isAdmin = 0;
             db_isOnline = 0;
+            db_isPrivate = 0;
 
             db_id = atoi(argv[0]);
             db_username += argv[1];
             db_password += argv[2];
             db_isAdmin = atoi(argv[3]);
             db_isOnline = atoi(argv[4]);
+            db_isPrivate = atoi(argv[5]);
         }
 
         if(argc == 4)
@@ -661,9 +718,8 @@ int callbackCheckIfExists(void *NotUsed, int argc, char **argv,
     return 0;
 }
 
-int callbackGetMaxId(void *NotUsed, int argc, char **argv, 
-                    char **azColName) {
-    
+int callbackGetMaxId(void *NotUsed, int argc, char **argv, char **azColName) 
+{    
     NotUsed = 0;
 
     if(argc)
@@ -696,9 +752,8 @@ bool isPostValid(char *authorid, char *visibility)
     return false;
 }
 
-int callbackCollectPosts(void *NotUsed, int argc, char **argv, 
-                    char **azColName) {
-    
+int callbackCollectPosts(void *NotUsed, int argc, char **argv, char **azColName) 
+{
     NotUsed = 0;
         
     if(isPostValid(argv[2], argv[3]))
@@ -715,9 +770,8 @@ int callbackCollectPosts(void *NotUsed, int argc, char **argv,
     return 0;
 }
 
-int callbackAreInFriends(void *NotUsed, int argc, char **argv, 
-                    char **azColName) {
-    
+int callbackAreInFriends(void *NotUsed, int argc, char **argv, char **azColName) 
+{    
     db_callbackAns = 1;
 
     if(argc)
@@ -730,3 +784,18 @@ int callbackAreInFriends(void *NotUsed, int argc, char **argv,
 
     return 0;
 }                
+
+int callbackCollectOnline(void *NotUsed, int argc, char **argv, char **azColName) 
+{
+    if(argc == 6)
+    {
+        userinfo toAdd;
+        toAdd.userId = atoi(argv[0]);
+        toAdd.userName = "";
+        toAdd.userName += argv[1];
+
+        db_users.push_back(toAdd);
+    }
+
+    return 0;
+}

@@ -39,6 +39,7 @@ bool LogoutCommand();               // commandId = 5
 bool ShowPostsCommand();            // commandId = 6
 bool AddPostCommand();              // commandId = 8
 bool DeletePostCommand();           // commandId = 9
+bool OnlineCommand();               // commandId = 10
 
 int main()
 {
@@ -123,6 +124,7 @@ bool ExecuteCommand(int commandId)
         case ECRegisterA:   return RegisterCommand(1);
         case ECAddPost:     return AddPostCommand();
         case ECDeletePost:  return DeletePostCommand();
+        case ECOnline:      return OnlineCommand();
     }
 
     return false;
@@ -498,6 +500,41 @@ bool DeletePostCommand()
     
     strcpy(msg, "");
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    return true;
+}
+
+bool OnlineCommand()
+{
+    int clientId = - 1;
+    if(read(client, &clientId, 4) <= 0)
+        S_READ_ERROR
+
+    int testResult = 1;
+
+    if(clientId == -1)
+        testResult = 0;
+        
+    if(write(client, &testResult, 4) < 0)
+        S_WRITE_ERROR
+
+    if(testResult == 0)
+    {
+        strcpy(msg, "");
+        strcpy(msg, T_NEED_LOGIN);
+
+        if(write(client, msg, 1000) < 0)
+            S_WRITE_ERROR
+
+        return true;
+    }
+
+    strcpy(msg, "");
+    if(!getOnline(msg))
+        strcpy(msg, T_NO_USER_ONLINE);
 
     if(write(client, msg, 1000) < 0)
         S_WRITE_ERROR

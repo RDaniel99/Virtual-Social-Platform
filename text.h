@@ -29,7 +29,8 @@ enum EComenzi
     ECShowPosts,
     ECRegisterA,
     ECAddPost,
-    ECDeletePost
+    ECDeletePost,
+    ECOnline
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -51,13 +52,20 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 !logout     - Deconectare.\n \
 !showposts  - Afiseaza postarile din newsfeed.\n \
 !addpost    - Adauga o postare.\n \
-!deletepost - Sterge o postare.\n"
+!deletepost - Sterge o postare.\n \
+!online     - Afiseaza utilizatorii logati.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
 
 #define T_USER_ALREADY_LOGGED \
 "Sunteti deja conectat!\n"
+
+#define T_NEED_LOGIN \
+"Trebuie sa va logati ca sa folositi aceasta comanda!\n"
+
+#define T_NO_USER_ONLINE \
+"Niciun utilizator conectat!\n"
 
 #define T_NO_POST_TO_SHOW \
 "Nicio postare de afisat.\n"
