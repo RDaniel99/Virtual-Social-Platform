@@ -23,7 +23,11 @@ enum EMesaje
     EMSentFriendRequestFail,
     EMSentFriendRequestSucces,
     EMRemoveFriendFail,
-    EMRemoveFriendSucces
+    EMRemoveFriendSucces,
+    EMAcceptRequestFail,
+    EMAcceptRequestSucces,
+    EMRemoveRequestFail,
+    EMRemoveRequestSucces
 };
 
 enum EComenzi
@@ -44,7 +48,9 @@ enum EComenzi
     ECAddFriend,
     ECRequests,
     ECShowFriends,
-    ECRemoveFriend
+    ECRemoveFriend,
+    ECAcceptRequest,
+    ECRemoveRequest
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -73,7 +79,9 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 !addfriend      - Adauga un prieten.\n \
 !requests       - Afiseaza cererile de prietenie primite.\n \
 !showfriends    - Afiseaza prietenii.\n \
-!removefriend   - Sterge un prieten.\n"
+!removefriend   - Sterge un prieten.\n \
+!acceptrequest  - Accepta o cerere de prietenie.\n \
+!removerequest  - Sterge o cerere de prietenie.\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
@@ -116,6 +124,18 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 
 #define T_REMOVE_FRIEND_SUCCES \
 "Utilizatorul a fost sters cu succes din lista de prieteni.\n"
+
+#define T_ACCEPT_REQUEST_FAIL \
+"Cererea de prietenie nu a fost acceptata. ID Friend Request invalid.\n"
+
+#define T_ACCEPT_REQUEST_SUCCES \
+"Cererea de pretenie a fost acceptata cu succes. Sunteti acum prieteni!\n"
+
+#define T_REMOVE_REQUEST_FAIL \
+"Cererea de prietenie nu a fost stearsa. ID Friend Request invalid.\n"
+
+#define T_REMOVE_REQUEST_SUCCES \
+"Cererea de prietenie a fost stearsa cu succes.\n"
 
 #define T_REMOVE
 

@@ -744,12 +744,53 @@ bool isUserAdmin(int userid)
     return db_isAdmin;
 }
 
+bool acceptReq(int userid, int friendid)
+{
+    bool ok = true;
+    ok = ok & areFriends(friendid, userid, 0);
+
+    if(!ok)
+        return false;
+    
+    string sql = "";
+    sql += "UPDATE Friendships SET IsAccepted = 1 WHERE IdSender = ";
+    sql += std::to_string(friendid);
+    sql += " AND IdReciever = ";
+    sql += std::to_string(userid);
+    sql += ";";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    db_friendId2 = db_friendId1 = 0;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_FRIENDSHIPS_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_FRIENDSHIPS_ERROR
+
+    sqlite3_close(db);
+
+    return true;
+}
+
 bool addFriend(int senderId, int recieverId, int type)
 {
     bool ok = true;
     ok = ok & existsId(recieverId, 1);
     ok = ok & (1 <= type && type <= 2);
-    ok = ok & (db_isOnline == 1);
+    ok = ok & !areFriends(recieverId, senderId, 0);
+    ok = ok & !areFriends(recieverId, senderId, 1);
+    ok = ok & !areFriends(senderId, recieverId, 0);
+    ok = ok & !areFriends(senderId, recieverId, 1);
 
     if(!ok)
         return false;
@@ -786,11 +827,11 @@ bool addFriend(int senderId, int recieverId, int type)
     return true;
 }
 
-bool deleteFriend(int userid, int friendid)
+bool deleteFriend(int userid, int friendid, int accepted)
 {
-    if(!areFriends(userid, friendid, 1) && !areFriends(friendid, userid, 1))
+    if(!areFriends(userid, friendid, accepted) && !areFriends(friendid, userid, accepted))
         return false;
-
+    
     string sql = "";
     sql += "DELETE FROM Friendships WHERE (IdSender = ";
     sql += std::to_string(userid);

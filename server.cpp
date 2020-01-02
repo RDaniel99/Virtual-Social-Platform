@@ -47,6 +47,8 @@ bool    AddFriendCommand();             // commandId = 13
 bool    RequestsCommand();              // commandId = 14
 bool    FriendsCommand();               // commandId = 15
 bool    RemoveFriendCommand();          // commandId = 16
+bool    AcceptRequestCommand();         // commandId = 17
+bool    RemoveRequestCommand();         // commandId = 18
 
 int main()
 {
@@ -164,6 +166,8 @@ bool ExecuteCommand(int commandId)
         case ECRequests:        return RequestsCommand();
         case ECShowFriends:     return FriendsCommand();
         case ECRemoveFriend:    return RemoveFriendCommand();
+        case ECAcceptRequest:   return AcceptRequestCommand();
+        case ECRemoveRequest:   return RemoveRequestCommand();
     }
 
     return false;
@@ -837,8 +841,96 @@ bool RemoveFriendCommand()
     msg[strlen(msg) - 1] = 0;
     int idFriend = atoi(msg);
 
-    if(deleteFriend(clientId, idFriend))
+    if(deleteFriend(clientId, idFriend, 1))
         msgId = 20;
+
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+    
+    return 0;
+}
+
+bool AcceptRequestCommand()
+{
+    int msgId = 21;
+
+    int clientId = TestUserId();
+    if(client == -1)
+        return true;
+
+    strcpy(msg, "");
+    strcpy(msg, T_USER_ID);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+    
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] || '9' < msg[i])
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    int idFriend = atoi(msg);
+
+    if(acceptReq(clientId, idFriend))
+        msgId = 22;
+
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+    
+    return 0;
+}
+
+bool RemoveRequestCommand()
+{
+    int msgId = 23;
+
+    int clientId = TestUserId();
+    if(client == -1)
+        return true;
+
+    strcpy(msg, "");
+    strcpy(msg, T_USER_ID);
+
+    if(write(client, msg, 1000) < 0)
+        S_WRITE_ERROR
+
+    if(read(client, msg, 1000) < 0)
+        S_READ_ERROR
+    
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] || '9' < msg[i])
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, 1000) < 0)
+                S_WRITE_ERROR
+
+            return true;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    int idFriend = atoi(msg);
+
+    if(deleteFriend(clientId, idFriend, 0))
+        msgId = 24;
 
     strcpy(msg, "");
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);

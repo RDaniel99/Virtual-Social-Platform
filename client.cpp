@@ -40,6 +40,8 @@ bool    AddFriendCommand();             // commandId = 13
 bool    RequestsCommand();              // commandId = 14
 bool    FriendsCommand();               // commandId = 15
 bool    RemoveFriendCommand();          // commandId = 16
+bool    AcceptRequestCommand();         // commandId = 17
+bool    RemoveRequestCommand();         // commandId = 18
 
 int main(int argc, char **argv)
 {
@@ -103,22 +105,24 @@ int GetCommand(char *msg)
     if(msg[0] != '!')
         return ECUnknown;
 
-    if(strcmp(msg + 1, "help\n") == 0)          return ECHelp;
-    if(strcmp(msg + 1, "quit\n") == 0)          return ECQuit;
-    if(strcmp(msg + 1, "register\n") == 0)      return ECRegister;
-    if(strcmp(msg + 1, "login\n") == 0)         return ECLogin;
-    if(strcmp(msg + 1, "logout\n") == 0)        return ECLogout;
-    if(strcmp(msg + 1, "showposts\n") == 0)     return ECShowPosts;
-    if(strcmp(msg + 1, "registera\n") == 0)     return ECRegisterA;
-    if(strcmp(msg + 1, "addpost\n") == 0)       return ECAddPost;
-    if(strcmp(msg + 1, "deletepost\n") == 0)    return ECDeletePost;
-    if(strcmp(msg + 1, "online\n") == 0)        return ECOnline;
-    if(strcmp(msg + 1, "editpost\n") == 0)      return ECEditPost;
-    if(strcmp(msg + 1, "editprofile\n") == 0)   return ECEditProfile;
-    if(strcmp(msg + 1, "addfriend\n") == 0)     return ECAddFriend;
-    if(strcmp(msg + 1, "requests\n") == 0)      return ECRequests;
-    if(strcmp(msg + 1, "friends\n") == 0)       return ECShowFriends;
-    if(strcmp(msg + 1, "removefriend\n") == 0)  return ECRemoveFriend;
+    if(strcmp(msg + 1, "help\n") == 0)              return ECHelp;
+    if(strcmp(msg + 1, "quit\n") == 0)              return ECQuit;
+    if(strcmp(msg + 1, "register\n") == 0)          return ECRegister;
+    if(strcmp(msg + 1, "login\n") == 0)             return ECLogin;
+    if(strcmp(msg + 1, "logout\n") == 0)            return ECLogout;
+    if(strcmp(msg + 1, "showposts\n") == 0)         return ECShowPosts;
+    if(strcmp(msg + 1, "registera\n") == 0)         return ECRegisterA;
+    if(strcmp(msg + 1, "addpost\n") == 0)           return ECAddPost;
+    if(strcmp(msg + 1, "deletepost\n") == 0)        return ECDeletePost;
+    if(strcmp(msg + 1, "online\n") == 0)            return ECOnline;
+    if(strcmp(msg + 1, "editpost\n") == 0)          return ECEditPost;
+    if(strcmp(msg + 1, "editprofile\n") == 0)       return ECEditProfile;
+    if(strcmp(msg + 1, "addfriend\n") == 0)         return ECAddFriend;
+    if(strcmp(msg + 1, "requests\n") == 0)          return ECRequests;
+    if(strcmp(msg + 1, "friends\n") == 0)           return ECShowFriends;
+    if(strcmp(msg + 1, "removefriend\n") == 0)      return ECRemoveFriend;
+    if(strcmp(msg + 1, "acceptrequest\n") == 0)     return ECAcceptRequest;
+    if(strcmp(msg + 1, "removerequest\n") == 0)     return ECRemoveRequest;
 
     return ECUnknown;
 }
@@ -147,6 +151,8 @@ bool ExecuteCommand(int commandId)
         case ECRequests:        return RequestsCommand();
         case ECShowFriends:     return FriendsCommand();
         case ECRemoveFriend:    return RemoveFriendCommand();
+        case ECAcceptRequest:   return AcceptRequestCommand();
+        case ECRemoveRequest:   return RemoveRequestCommand();
     }
 
     return false;
@@ -544,6 +550,54 @@ bool FriendsCommand()
 }
 
 bool RemoveFriendCommand()
+{
+    if(!PassTestId())
+        return true;
+    
+    // ID friend
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
+    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)      C_READ_ERROR
+    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+
+    // Raspuns
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
+    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+
+    return true;
+}
+
+bool AcceptRequestCommand()
+{
+    if(!PassTestId())
+        return true;
+    
+    // ID friend
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
+    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+
+    bzero(msg, 1000);
+    if(read(0, msg, 1000) < 0)      C_READ_ERROR
+    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+
+    // Raspuns
+    fflush(stdout);
+    bzero(msg, 1000);
+    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
+    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+
+    return true;
+}
+
+bool RemoveRequestCommand()
 {
     if(!PassTestId())
         return true;

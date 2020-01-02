@@ -18,11 +18,12 @@ bool    addFriend(int senderId, int recieverId, int type);
 bool    addPost(char *postText, int ownerid, int visibility);
 bool    addUser(char *nume, char* pass, int isAdmin = 0, int privacy = 0);
 
-bool    deleteFriend(int userid, int friendid);
+bool    deleteFriend(int userid, int friendid, int accepted);
 bool    deletePost(int postid, int userid);
 
 bool    loginUser(char *nume, char* pass);
 bool    updateOn(int userid, int value);
+bool    acceptReq(int userid, int friendid);
 
 bool    updateUser(char *nume, char *pass, int privacy, int userid);
 bool    updatePost(int postid, char *postText, int ownerid, int visibility);
