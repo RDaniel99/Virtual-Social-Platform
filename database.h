@@ -15,6 +15,7 @@ bool    validatePostText(char *postText);
 bool    validateOwnerId(int ownerid);
 bool    validateVisibility(int visibility);
 
+bool    addMessage(int userid, char* text);
 bool    addFriend(int senderId, int recieverId, int type);
 bool    addPost(char *postText, int ownerid, int visibility);
 bool    addUser(char *nume, char* pass, int isAdmin = 0, int privacy = 0);
@@ -33,6 +34,8 @@ bool    leaveRoom(int userid);
 bool    updateUser(char *nume, char *pass, int privacy, int userid);
 bool    updatePost(int postid, char *postText, int ownerid, int visibility);
 
+bool    getMessages(int userid, char *msg);
+bool    getRooms(char *msg);
 bool    getMembers(int userid, char *msg);
 bool    getOnline(char *msg);
 bool    getPosts(int userid, char *msg, bool areAll = false);
@@ -56,5 +59,7 @@ int     callbackCollectPosts(void *, int, char **, char **);
 int     callbackAreInFriends(void *, int, char **, char **);
 int     callbackCollectAllPosts(void *, int, char **, char **);
 int     callbackCollectOnline(void *, int, char **, char **);
+int     callbackCollectRooms(void *, int, char **, char **);
+int     callbackCollectMessages(void *, int, char **, char **);
 
 #endif //H_DATABASE

@@ -42,6 +42,7 @@ void ConvertToMessage(EMesaje mesaj, char *result)
         case EMLeaveRoomSucces:         strcpy(result, T_LEAVE_ROOM_SUCCES);        break;
         case EMDeleteRoomFail:          strcpy(result, T_DELETE_ROOM_FAIL);         break;
         case EMDeleteRoomSucces:        strcpy(result, T_DELETE_ROOM_SUCCES);       break;
+        case EMRefreshFail:             strcpy(result, T_REFRESH_FAIL);             break;
 
         default:                        strcpy(result, T_UNKNOWN_MESSAGE);          break;
     }

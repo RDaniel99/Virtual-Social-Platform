@@ -34,10 +34,15 @@ struct roominfo
 {
     int roomId;
     string roomName;
-    string msg;
-    int userIdMsg;
 };
 
+struct messageinfo
+{
+    int authorId;
+    string text;
+};
+
+vector<messageinfo>     db_messages;
 vector<roominfo>        db_rooms;
 vector<friendshipinfo>  db_friends;
 vector<postinfo>        db_posts;
@@ -54,6 +59,7 @@ string                  dbUser_Password;
 int                     dbUser_Admin;
 int                     dbUser_Online;
 int                     dbUser_Private;
+int                     dbUser_LastMsg;
 
 // Posts Table (Table = 2)
 string                  dbPost_Text;
@@ -544,6 +550,53 @@ bool leaveRoom(int userid)
     return true;
 }
 
+bool getRooms(char *msg)
+{
+    strcpy(msg, "");
+
+    db_rooms.clear();
+
+    string sql = "";
+    sql += "SELECT * FROM Rooms;";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_ROOMS_ERROR
+
+    db_tabelReq = 4;
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectRooms, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_ROOMS_ERROR
+
+    sqlite3_close(db);
+
+    if(db_rooms.size() == 0)
+        return false;
+
+    string ans = "";
+
+    for(unsigned int i = 0; i < db_rooms.size(); i++)
+    {
+        ans += "Room ID: ";
+        ans += std::to_string(db_rooms[i].roomId);
+        ans += " | Room Name: ";
+        ans += db_rooms[i].roomName;
+        ans += '\n';
+    }
+
+    strcpy(msg, ans.c_str());
+
+    return true;
+}
+
 bool getMembers(int userid, char *msg)
 {
     if(!existsId(userid, 1))
@@ -578,6 +631,114 @@ bool getMembers(int userid, char *msg)
 
     strcpy(msg, "");
     strcpy(msg, ans.c_str());
+
+    return true;
+}
+
+bool getMessages(int userid, char *msg)
+{
+    if(!existsId(userid, 1))
+        return false;
+
+    if(!db_roomId)
+        return false;
+
+    db_messages.clear();
+
+    string sql = "";
+    sql += "SELECT * FROM Messages WHERE MessageId > ";
+    sql += std::to_string(dbUser_LastMsg);
+    sql += " AND RoomId = ";
+    sql += std::to_string(db_roomId);
+    sql += ";";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_MESSAGES_ERROR
+
+    db_tabelReq = 5;
+    exitCode = sqlite3_exec(db, sql.c_str(), callbackCollectMessages, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_SELECT_MESSAGES_ERROR
+
+    if(db_messages.size() == 0)
+        return false;
+    
+    string ans = "";
+
+    for(unsigned int i = 0; i < db_messages.size(); i++)
+    {
+        char nume[BUFF_SIZE];
+        bzero(nume, BUFF_SIZE);
+        getName(db_messages[i].authorId, nume);
+        ans += nume;
+        ans += ": ";
+        ans += db_messages[i].text;
+        ans += '\n';
+    }
+
+    strcpy(msg, ans.c_str());
+
+    int newLast = computeNextId(5) - 1;
+
+    sql = "UPDATE Users SET UserLastMsg = ";
+    sql += std::to_string(newLast);
+    sql += " WHERE UserId = ";
+    sql += std::to_string(userid);
+    sql += ";";
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_UPDATE_USER_ERROR
+
+    sqlite3_close(db);
+
+    return true;
+}
+
+bool addMessage(int userid, char *text)
+{
+    if(!existsId(userid, 1))
+        return false;
+
+    int nxtId = computeNextId(5);
+    string sql = "";
+    sql += "INSERT INTO Messages VALUES(";
+    sql += std::to_string(nxtId);
+    sql += ", ";
+    sql += std::to_string(db_roomId);
+    sql += ", ";
+    sql += std::to_string(userid);
+    sql += ", '";
+    sql += text;
+    sql += "');";
+
+    DB_SQL_COMMAND
+
+    sqlite3* db;
+    int exitCode = 0;
+    char *err;
+
+    exitCode = sqlite3_open("mydatabase.db", &db);
+
+    if(exitCode != SQLITE_OK)
+        DB_OPEN_MESSAGES_ERROR
+
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_INSERT_MESSAGES_ERROR
+
+    sqlite3_close(db);
 
     return true;
 }
@@ -1441,6 +1602,7 @@ int callbackCheckIfExists(void *NotUsed, int argc, char **argv, char **azColName
             dbUser_Online = 0;
             dbUser_Private = 0;
             db_roomId = 0;
+            dbUser_LastMsg = 0;
 
             db_id = atoi(argv[0]);
             dbUser_Name += argv[1];
@@ -1449,6 +1611,7 @@ int callbackCheckIfExists(void *NotUsed, int argc, char **argv, char **azColName
             dbUser_Online = atoi(argv[4]);
             dbUser_Private = atoi(argv[5]);
             db_roomId = atoi(argv[6]);
+            dbUser_LastMsg = atoi(argv[7]);
         }
 
         if(db_tabelReq == 2)
@@ -1595,6 +1758,35 @@ int callbackCollectRequests(void *NotUsed, int argc, char **argv, char **azColNa
         toAdd.type = atoi(argv[2]);
 
         db_friends.push_back(toAdd);
+    }
+
+    return 0;
+}
+
+int callbackCollectRooms(void *NotUsed, int argc, char **argv, char **azColName)
+{
+    if(db_tabelReq == 4)
+    {
+        roominfo toAdd;
+        toAdd.roomId = atoi(argv[0]);
+        toAdd.roomName = "";
+        toAdd.roomName += argv[1];
+
+        db_rooms.push_back(toAdd);
+    }
+
+    return 0;
+}
+
+int callbackCollectMessages(void *NotUsed, int argc, char **argv, char **azColName)
+{
+    if(db_tabelReq == 5)
+    {
+        messageinfo toAdd;
+        toAdd.authorId = atoi(argv[2]);
+        toAdd.text = argv[3];
+
+        db_messages.push_back(toAdd);
     }
 
     return 0;

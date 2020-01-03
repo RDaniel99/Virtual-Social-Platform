@@ -38,7 +38,8 @@ enum EMesaje
     EMLeaveRoomFail,
     EMLeaveRoomSucces,
     EMDeleteRoomFail,
-    EMDeleteRoomSucces
+    EMDeleteRoomSucces,
+    EMRefreshFail
 };
 
 enum EComenzi
@@ -113,6 +114,12 @@ Comenzi chat rooms:\n \
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
+
+#define T_MESSAGE \
+"Mesaj: "
+
+#define T_REFRESH_FAIL \
+"Niciun mesaj nou sau nu sunteti intr-un room.\n"
 
 #define T_USER_ALREADY_LOGGED \
 "Sunteti deja conectat!\n"
@@ -261,6 +268,9 @@ postarea nu exista / nu sunteti conectat.\n"
 
 #define T_ROOM_ID \
 "ID Room: "
+
+#define T_NO_ROOMS \
+"Nu sunt camere de chat.\n"
 
 #endif
 

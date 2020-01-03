@@ -648,6 +648,17 @@ bool RemoveRequestCommand()
 
 bool ShowRoomsCommand()
 {
+    if(!PassTestId())
+        return true;
+
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
     return true;
 }
 
@@ -723,6 +734,37 @@ bool CreateRoomCommand()
 
 bool MessageCommand()
 {
+    if(!PassTestId())
+        return true;
+
+    // Cere nume
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+    
+    // Transmite nume
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+    
+    if(write(sd, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    // raspuns
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+    
+    if(strcmp(msg, ".") != 0)
+        if(write(1, msg, BUFF_SIZE) < 0)
+            C_WRITE_ERROR
+
     return true;
 }
 
@@ -743,6 +785,17 @@ bool LeaveRoomCommand()
 
 bool RefreshCommand()
 {
+    if(!PassTestId())
+        return true;
+
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
     return true;
 }
 

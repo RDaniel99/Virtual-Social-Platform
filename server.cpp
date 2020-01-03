@@ -961,6 +961,17 @@ bool RemoveRequestCommand()
 
 bool ShowRoomsCommand()
 {
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    bzero(msg, BUFF_SIZE);
+    if(!getRooms(msg))
+        strcpy(msg, T_NO_ROOMS);
+
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+
     return true;
 }
 
@@ -1044,6 +1055,36 @@ bool CreateRoomCommand()
 
 bool MessageCommand()
 {
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    strcpy(msg, T_MESSAGE);
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+    
+    bzero(msg, BUFF_SIZE);
+    if(read(client, msg, BUFF_SIZE) < 0)
+        S_READ_ERROR
+
+    msg[strlen(msg) - 1] = 0;
+
+    if(!addMessage(clientId, msg))
+    {
+        strcpy(msg, "");
+        ConvertToMessage(EMMessageFail, msg);
+
+        if(write(client, msg, BUFF_SIZE) < 0)
+            S_WRITE_ERROR
+    }
+    else
+    {
+        strcpy(msg, ".");
+        
+        if(write(client, msg, BUFF_SIZE) < 0)
+            S_WRITE_ERROR
+    }
+    
     return true;
 }
 
@@ -1069,6 +1110,16 @@ bool LeaveRoomCommand()
 
 bool RefreshCommand()
 {
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    if(!getMessages(clientId, msg))
+        ConvertToMessage(EMRefreshFail, msg);
+
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+
     return true;
 }
 
