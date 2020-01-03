@@ -2,7 +2,6 @@
 
 #define H_SERVER
 
-#include <iostream>
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -22,8 +21,8 @@ using namespace std;
 
 struct sockaddr_in  server;
 struct sockaddr_in  from;
-char msg[1000];
-char msgrasp[1000] = " ";
+char msg[BUFF_SIZE];
+char msgrasp[BUFF_SIZE] = " ";
 int socketDescriptor;
 int client;
 
@@ -34,7 +33,7 @@ bool    ExecuteCommand(int commandId);
 bool    UnknownCommand();               // commandId = 0
 bool    HelpCommand();                  // commandId = 1
 bool    QuitCommand();                  // commandId = 2
-bool    RegisterCommand(int isAdmin);   // commandId = 3 sau 7
+bool    RegisterCommand(int isAdmin);   // commandId = 3(0) sau 7(1)
 bool    LoginCommand();                 // commandId = 4
 bool    LogoutCommand();                // commandId = 5
 bool    ShowPostsCommand();             // commandId = 6
@@ -49,6 +48,15 @@ bool    FriendsCommand();               // commandId = 15
 bool    RemoveFriendCommand();          // commandId = 16
 bool    AcceptRequestCommand();         // commandId = 17
 bool    RemoveRequestCommand();         // commandId = 18
+
+bool    ShowRoomsCommand();             // commandId = 19
+bool    JoinRoomCommand();              // commandId = 20
+bool    CreateRoomCommand();            // commandId = 21
+bool    MessageCommand();               // commandId = 22
+bool    LeaveRoomCommand();             // commandId = 23
+bool    RefreshCommand();               // commandId = 24
+bool    DeleteRoomCommand();            // commandId = 25
+bool    RoomMembersCommand();           // commandId = 26
 
 int main()
 {
@@ -68,7 +76,7 @@ int main()
     if(bind(socketDescriptor, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1)
         S_BIND_ERROR
 
-    if(listen(socketDescriptor, 5) == -1)
+    if(listen(socketDescriptor, 10) == -1)
         S_LISTEN_ERROR
 
     if(signal(SIGCHLD, waitClosedChild) == SIG_ERR)
@@ -97,7 +105,7 @@ int main()
             S_NEW_CLIENT
             while(1)
             {
-                bzero(msg, 1000);
+                bzero(msg, BUFF_SIZE);
                 fflush(stdout);
 
                 int commandId;
@@ -109,6 +117,7 @@ int main()
                 bool ok = ExecuteCommand(commandId);
             }
         }
+        
     }
 
     return 0;
@@ -133,7 +142,7 @@ int TestUserId()
         strcpy(msg, "");
         strcpy(msg, T_NEED_LOGIN);
 
-        if(write(client, msg, 1000) < 0)
+        if(write(client, msg, BUFF_SIZE) < 0)
             S_WRITE_ERROR
     }
 
@@ -168,6 +177,14 @@ bool ExecuteCommand(int commandId)
         case ECRemoveFriend:    return RemoveFriendCommand();
         case ECAcceptRequest:   return AcceptRequestCommand();
         case ECRemoveRequest:   return RemoveRequestCommand();
+        case ECShowRooms:       return ShowRoomsCommand();
+        case ECJoinRoom:        return JoinRoomCommand();
+        case ECCreateRoom:      return CreateRoomCommand();
+        case ECMessage:         return MessageCommand();
+        case ECLeaveRoom:       return LeaveRoomCommand();
+        case ECRefresh:         return RefreshCommand();
+        case ECDeleteRoom:      return DeleteRoomCommand();
+        case ECRoomMembers:     return RoomMembersCommand();
     }
 
     return false;
@@ -179,7 +196,7 @@ bool UnknownCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return true;
@@ -191,7 +208,7 @@ bool HelpCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return true;
@@ -203,7 +220,7 @@ bool QuitCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     int clientLoggedOut = -1;
@@ -212,6 +229,7 @@ bool QuitCommand()
         S_READ_ERROR
     
     updateOn(clientLoggedOut, 0);
+    leaveRoom(clientLoggedOut);
 
     if(clientLoggedOut > -1)
         S_LOGOUT
@@ -242,7 +260,7 @@ bool RegisterCommand(int isAdmin)
         strcpy(msg, "");
         strcpy(msg, T_USER_ALREADY_LOGGED);
 
-        if(write(client, msg, 1000) < 0)
+        if(write(client, msg, BUFF_SIZE) < 0)
             S_WRITE_ERROR
 
         return true;
@@ -255,21 +273,21 @@ bool RegisterCommand(int isAdmin)
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_NAME);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char nume[1000];
-    if(read(client, nume, 1000) < 0)
+    char nume[BUFF_SIZE];
+    if(read(client, nume, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_PASS);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char pass[1000];
-    if(read(client, pass, 1000) < 0)
+    char pass[BUFF_SIZE];
+    if(read(client, pass, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     int privacy = 0;
@@ -277,10 +295,10 @@ bool RegisterCommand(int isAdmin)
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_PRIVACY);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
     
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
     
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -290,7 +308,7 @@ bool RegisterCommand(int isAdmin)
 
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
             
             return 0;
@@ -309,7 +327,7 @@ bool RegisterCommand(int isAdmin)
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 }
 
@@ -333,7 +351,7 @@ bool LoginCommand()
         strcpy(msg, "");
         strcpy(msg, T_USER_ALREADY_LOGGED);
 
-        if(write(client, msg, 1000) < 0)
+        if(write(client, msg, BUFF_SIZE) < 0)
             S_WRITE_ERROR
 
         return true;
@@ -342,21 +360,21 @@ bool LoginCommand()
     strcpy(msg, "");
     strcpy(msg, T_LOGIN_NAME);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char nume[1000];
-    if(read(client, nume, 1000) < 0)
+    char nume[BUFF_SIZE];
+    if(read(client, nume, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
     strcpy(msg, T_LOGIN_PASS);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char pass[1000];
-    if(read(client, pass, 1000) < 0)
+    char pass[BUFF_SIZE];
+    if(read(client, pass, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     // Se elimina \n de la final
@@ -370,7 +388,7 @@ bool LoginCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     int idToSend = (msgId == 6 ? getIdFromLastSelect() : -1);
@@ -406,7 +424,7 @@ bool LogoutCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 }
 
@@ -422,7 +440,7 @@ bool ShowPostsCommand()
     if(!getPosts(clientId, msg))
         strcpy(msg, T_NO_POST_TO_SHOW);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return true;
@@ -439,11 +457,11 @@ bool AddPostCommand()
     strcpy(msg, "");
     strcpy(msg, T_POST_TEXT);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char textPostare[1000];
-    if(read(client, textPostare, 1000) < 0)
+    char textPostare[BUFF_SIZE];
+    if(read(client, textPostare, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     textPostare[strlen(textPostare) - 1] = 0;
@@ -451,12 +469,12 @@ bool AddPostCommand()
     strcpy(msg, "");
     strcpy(msg, T_POST_VISIBILITY);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     int visibility;
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -465,7 +483,7 @@ bool AddPostCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -479,7 +497,7 @@ bool AddPostCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     if(msgId == 10)
@@ -499,13 +517,13 @@ bool DeletePostCommand()
     strcpy(msg, "");
     strcpy(msg, T_POST_ID);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     int postId;
 
-    bzero(msg, 1000);
-    if(read(client, msg, 1000) < 0)
+    bzero(msg, BUFF_SIZE);
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -514,7 +532,7 @@ bool DeletePostCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -529,7 +547,7 @@ bool DeletePostCommand()
     strcpy(msg, "");
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return true;
@@ -545,7 +563,7 @@ bool OnlineCommand()
     if(!getOnline(msg))
         strcpy(msg, T_NO_USER_ONLINE);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return true;
@@ -562,12 +580,12 @@ bool EditPostCommand()
     strcpy(msg, "");
     strcpy(msg, T_POST_ID);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     int idPost = 0;
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -576,7 +594,7 @@ bool EditPostCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -588,11 +606,11 @@ bool EditPostCommand()
     strcpy(msg, "");
     strcpy(msg, T_POST_TEXT);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char textPostare[1000];
-    if(read(client, textPostare, 1000) < 0)
+    char textPostare[BUFF_SIZE];
+    if(read(client, textPostare, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     textPostare[strlen(textPostare) - 1] = 0;
@@ -600,12 +618,12 @@ bool EditPostCommand()
     strcpy(msg, "");
     strcpy(msg, T_POST_VISIBILITY);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     int visibility;
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -614,7 +632,7 @@ bool EditPostCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -628,7 +646,7 @@ bool EditPostCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     if(msgId == 14)
@@ -648,21 +666,21 @@ bool EditProfileCommand()
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_NAME);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char nume[1000];
-    if(read(client, nume, 1000) < 0)
+    char nume[BUFF_SIZE];
+    if(read(client, nume, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
     strcpy(msg, T_REGISTER_PASS);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    char pass[1000];
-    if(read(client, pass, 1000) < 0)
+    char pass[BUFF_SIZE];
+    if(read(client, pass, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     strcpy(msg, "");
@@ -670,10 +688,10 @@ bool EditProfileCommand()
 
     int privacy = 0;
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -683,7 +701,7 @@ bool EditProfileCommand()
 
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -703,7 +721,7 @@ bool EditProfileCommand()
 
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return true;
@@ -720,10 +738,10 @@ bool AddFriendCommand()
     strcpy(msg, "");
     strcpy(msg, T_USER_ID);
 
-    if(write(client, msg, 1000) < 0)    
+    if(write(client, msg, BUFF_SIZE) < 0)    
         S_WRITE_ERROR
 
-    if(read(client, msg, 1000) < 0)     
+    if(read(client, msg, BUFF_SIZE) < 0)     
         S_READ_ERROR
 
     int friendId = 0;
@@ -734,7 +752,7 @@ bool AddFriendCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
         }
 
@@ -744,10 +762,10 @@ bool AddFriendCommand()
     strcpy(msg, "");
     strcpy(msg, T_USER_TYPE);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
 
     int friendType = 0;
@@ -758,7 +776,7 @@ bool AddFriendCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
         }
 
@@ -771,7 +789,7 @@ bool AddFriendCommand()
     strcpy(msg, "");
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
     
     return true;
@@ -787,7 +805,7 @@ bool RequestsCommand()
     if(!getFriendReq(clientId, msg))
         strcpy(msg, T_NO_FRIEND_REQ);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return 0;
@@ -803,7 +821,7 @@ bool FriendsCommand()
     if(!getFriends(clientId, msg))
         strcpy(msg, T_NO_FRIEND_CONNECTED);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
     return 0;
@@ -820,10 +838,10 @@ bool RemoveFriendCommand()
     strcpy(msg, "");
     strcpy(msg, T_USER_ID);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
     
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -832,7 +850,7 @@ bool RemoveFriendCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -847,7 +865,7 @@ bool RemoveFriendCommand()
     strcpy(msg, "");
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
     
     return 0;
@@ -864,10 +882,10 @@ bool AcceptRequestCommand()
     strcpy(msg, "");
     strcpy(msg, T_USER_ID);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
     
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -876,7 +894,7 @@ bool AcceptRequestCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -891,7 +909,7 @@ bool AcceptRequestCommand()
     strcpy(msg, "");
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
     
     return 0;
@@ -908,10 +926,10 @@ bool RemoveRequestCommand()
     strcpy(msg, "");
     strcpy(msg, T_USER_ID);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
 
-    if(read(client, msg, 1000) < 0)
+    if(read(client, msg, BUFF_SIZE) < 0)
         S_READ_ERROR
     
     for(int i = 0; i < strlen(msg) - 1; i++)
@@ -920,7 +938,7 @@ bool RemoveRequestCommand()
             strcpy(msg, "");
             ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-            if(write(client, msg, 1000) < 0)
+            if(write(client, msg, BUFF_SIZE) < 0)
                 S_WRITE_ERROR
 
             return true;
@@ -935,8 +953,178 @@ bool RemoveRequestCommand()
     strcpy(msg, "");
     ConvertToMessage(static_cast<EMesaje>(msgId), msg);
 
-    if(write(client, msg, 1000) < 0)
+    if(write(client, msg, BUFF_SIZE) < 0)
         S_WRITE_ERROR
     
     return 0;
+}
+
+bool ShowRoomsCommand()
+{
+    return true;
+}
+
+bool JoinRoomCommand()
+{
+    int msgId = 25;
+
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    strcpy(msg, "");
+    strcpy(msg, T_ROOM_ID);
+
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+
+    bzero(msg, BUFF_SIZE);
+    if(read(client, msg, BUFF_SIZE) < 0)
+        S_READ_ERROR
+
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] || msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, BUFF_SIZE) < 0)
+                S_WRITE_ERROR
+
+            return 0;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    int roomToJoin = atoi(msg);
+
+    if(joinRoom(clientId, roomToJoin))
+        msgId = 26;
+
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+
+    return true;
+}
+
+bool CreateRoomCommand()
+{
+    int msgId = 27;
+
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+    
+    strcpy(msg, "");
+    strcpy(msg, T_ROOM_NAME);
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+    
+    char nume[BUFF_SIZE];
+    bzero(nume, BUFF_SIZE);
+    if(read(client, nume, BUFF_SIZE) < 0)
+        S_READ_ERROR
+
+    nume[strlen(nume) - 1] = 0;
+
+    if(addRoom(clientId, nume))
+        msgId = 28;
+
+    strcpy(msg, "");
+
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+
+    return true;
+}
+
+bool MessageCommand()
+{
+    return true;
+}
+
+bool LeaveRoomCommand()
+{
+    int msgId = 30;
+
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    if(leaveRoom(clientId))
+        msgId = 31;
+
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+
+    return true;
+}
+
+bool RefreshCommand()
+{
+    return true;
+}
+
+bool DeleteRoomCommand()
+{
+    int msgId = 32;
+
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    strcpy(msg, T_ROOM_ID);
+    
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+    
+    if(read(client, msg, BUFF_SIZE) < 0)
+        S_READ_ERROR
+    
+    for(int i = 0; i < strlen(msg) - 1; i++)
+        if('0' > msg[i] || msg[i] > '9')
+        {
+            strcpy(msg, "");
+            ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+            if(write(client, msg, BUFF_SIZE) < 0)
+                S_WRITE_ERROR
+
+            return 0;
+        }
+
+    msg[strlen(msg) - 1] = 0;
+    int roomToDelete = atoi(msg);
+
+    if(deleteRoom(clientId, roomToDelete))
+        msgId = 33;
+
+    strcpy(msg, "");
+    ConvertToMessage(static_cast<EMesaje>(msgId), msg);
+
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+    
+    return true;
+}
+
+bool RoomMembersCommand()
+{
+    int clientId = TestUserId();
+    if(clientId == -1)
+        return true;
+
+    getMembers(clientId, msg);
+    
+    if(write(client, msg, BUFF_SIZE) < 0)
+        S_WRITE_ERROR
+
+    return true;
 }

@@ -17,7 +17,7 @@ using namespace std;
 int port;
 int sd;
 struct sockaddr_in server;
-char msg[1000];
+char msg[BUFF_SIZE];
 int clientId = -1;
 
 int     GetCommand(char *msg);
@@ -27,7 +27,7 @@ bool    PassTestId();
 bool    UnknownCommand();               // commandId = 0
 bool    HelpCommand();                  // commandId = 1
 bool    QuitCommand();                  // commandId = 2
-bool    RegisterCommand(int isAdmin);   // commandId = 3 sau 7
+bool    RegisterCommand(int isAdmin);   // commandId = 3(0) sau 7(1)
 bool    LoginCommand();                 // commandId = 4
 bool    LogoutCommand();                // commandId = 5
 bool    ShowPostsCommand();             // commandId = 6
@@ -42,6 +42,15 @@ bool    FriendsCommand();               // commandId = 15
 bool    RemoveFriendCommand();          // commandId = 16
 bool    AcceptRequestCommand();         // commandId = 17
 bool    RemoveRequestCommand();         // commandId = 18
+
+bool    ShowRoomsCommand();             // commandId = 19
+bool    JoinRoomCommand();              // commandId = 20
+bool    CreateRoomCommand();            // commandId = 21
+bool    MessageCommand();               // commandId = 22
+bool    LeaveRoomCommand();             // commandId = 23
+bool    RefreshCommand();               // commandId = 24
+bool    DeleteRoomCommand();            // commandId = 25
+bool    RoomMembersCommand();           // commandId = 26
 
 int main(int argc, char **argv)
 {
@@ -64,10 +73,10 @@ int main(int argc, char **argv)
 
     while(1)
     {
-        bzero(msg, 1000);
+        bzero(msg, BUFF_SIZE);
         fflush(stdout);
 
-        read(0, msg, 1000);
+        read(0, msg, BUFF_SIZE);
 
         int commandId = GetCommand(msg);
         bool ok = ExecuteCommand(commandId);
@@ -86,7 +95,7 @@ bool PassTestId()
 
     if(!testId)
     {
-        if(read(sd, msg, 1000) < 0)
+        if(read(sd, msg, BUFF_SIZE) < 0)
             C_READ_ERROR
 
         printf("%s\n", msg);
@@ -123,6 +132,14 @@ int GetCommand(char *msg)
     if(strcmp(msg + 1, "removefriend\n") == 0)      return ECRemoveFriend;
     if(strcmp(msg + 1, "acceptrequest\n") == 0)     return ECAcceptRequest;
     if(strcmp(msg + 1, "removerequest\n") == 0)     return ECRemoveRequest;
+    if(strcmp(msg + 1, "showrooms\n") == 0)         return ECShowRooms;
+    if(strcmp(msg + 1, "joinroom\n") == 0)          return ECJoinRoom;
+    if(strcmp(msg + 1, "createroom\n") == 0)        return ECCreateRoom;
+    if(strcmp(msg + 1, "message\n") == 0)           return ECMessage;
+    if(strcmp(msg + 1, "leaveroom\n") == 0)         return ECLeaveRoom;
+    if(strcmp(msg + 1, "refresh\n") == 0)           return ECRefresh;
+    if(strcmp(msg + 1, "deleteroom\n") == 0)        return ECDeleteRoom;
+    if(strcmp(msg + 1, "members\n") == 0)           return ECRoomMembers;
 
     return ECUnknown;
 }
@@ -153,6 +170,14 @@ bool ExecuteCommand(int commandId)
         case ECRemoveFriend:    return RemoveFriendCommand();
         case ECAcceptRequest:   return AcceptRequestCommand();
         case ECRemoveRequest:   return RemoveRequestCommand();
+        case ECShowRooms:       return ShowRoomsCommand();
+        case ECJoinRoom:        return JoinRoomCommand();
+        case ECCreateRoom:      return CreateRoomCommand();
+        case ECMessage:         return MessageCommand();
+        case ECLeaveRoom:       return LeaveRoomCommand();
+        case ECRefresh:         return RefreshCommand();
+        case ECDeleteRoom:      return DeleteRoomCommand();
+        case ECRoomMembers:     return RoomMembersCommand();
     }
 
     return false;
@@ -160,7 +185,7 @@ bool ExecuteCommand(int commandId)
 
 bool UnknownCommand()
 {
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -170,7 +195,7 @@ bool UnknownCommand()
 
 bool HelpCommand()
 {
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -185,7 +210,7 @@ bool QuitCommand()
 
     clientId = -1;
 
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -203,39 +228,39 @@ bool RegisterCommand(int isAdmin)
     if(write(sd, &isAdmin, 4) < 0)      C_WRITE_ERROR
 
     // Mesaj cu nume
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)         C_READ_ERROR
-    if(write(0, msg, 1000) < 0)         C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)         C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)         C_WRITE_ERROR
 
     fflush(stdout);
     // Transmitere nume
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)          C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)        C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)          C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)        C_WRITE_ERROR
 
     // Mesaj cu Pass
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)         C_READ_ERROR
-    if(write(0, msg, 1000) < 0)         C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)         C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)         C_WRITE_ERROR
 
     fflush(stdout);
     // Transmitere Pass
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)          C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)        C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)          C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)        C_WRITE_ERROR
 
     // Mesaj cu Privacy
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)         C_READ_ERROR
-    if(write(0, msg, 1000) < 0)         C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)         C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)         C_WRITE_ERROR
 
     // Transmitere Privacy
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)          C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)        C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)          C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)        C_WRITE_ERROR
 
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -249,28 +274,28 @@ bool LoginCommand()
         return true;
 
     // Mesaj cu nume
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
     fflush(stdout);
     // Transmitere nume
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Mesaj cu Pass
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
     fflush(stdout);
     // Transmitere Pass
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -288,7 +313,7 @@ bool LogoutCommand()
 
     clientId = -1;
 
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -301,7 +326,7 @@ bool ShowPostsCommand()
     if(write(sd, &clientId, 4) < 0)
         C_WRITE_ERROR
 
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -316,29 +341,29 @@ bool AddPostCommand()
 
     // post text
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)   C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)   C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)    C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)  C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)    C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)  C_WRITE_ERROR
 
     // post type
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)   C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)   C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)    C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)  C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)    C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)  C_WRITE_ERROR
 
     // result
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)   C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)   C_WRITE_ERROR
 
     return true;
 }
@@ -350,19 +375,19 @@ bool DeletePostCommand()
 
     // post id
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)                         C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)                          C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)  C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)                          C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)  C_WRITE_ERROR
 
     // result
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)                         C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)                         C_WRITE_ERROR
 
     return true;
 }
@@ -372,7 +397,7 @@ bool OnlineCommand()
     if(!PassTestId())
         return true;
 
-    if(read(sd, msg, 1000) < 0)
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
 
     printf("%s\n", msg);
@@ -387,39 +412,39 @@ bool EditPostCommand()
 
     // Post Id
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)   C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)   C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)    C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)  C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)    C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)  C_WRITE_ERROR
 
     // Post text
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)   C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)   C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)    C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)  C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)    C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)  C_WRITE_ERROR
 
     // Post Type
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)   C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)   C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)    C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)  C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)    C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)  C_WRITE_ERROR
 
     // Result
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)   C_READ_ERROR
-    if(write(0, msg, 1000) < 0)   C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)   C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)   C_WRITE_ERROR
 
     return true;
 }
@@ -431,39 +456,39 @@ bool EditProfileCommand()
 
     // Nume
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Parola
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Tip de cont
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Rezultat
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
     return true;
 }
@@ -480,7 +505,7 @@ bool AddFriendCommand()
 
     if(!testId)
     {
-        if(read(sd, msg, 1000) < 0)
+        if(read(sd, msg, BUFF_SIZE) < 0)
             C_READ_ERROR
 
         printf("%s\n", msg);
@@ -490,29 +515,29 @@ bool AddFriendCommand()
 
     // ID Friend
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Tip Friend
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Result
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
     return true;
 }
@@ -523,11 +548,11 @@ bool RequestsCommand()
         return true;
 
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
     
-    if(write(0, msg, 1000) < 0)
+    if(write(1, msg, BUFF_SIZE) < 0)
         C_WRITE_ERROR
     
     return true;
@@ -539,11 +564,11 @@ bool FriendsCommand()
         return true;
 
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
         C_READ_ERROR
     
-    if(write(0, msg, 1000) < 0)
+    if(write(1, msg, BUFF_SIZE) < 0)
         C_WRITE_ERROR
     
     return true;
@@ -556,19 +581,19 @@ bool RemoveFriendCommand()
     
     // ID friend
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Raspuns
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
     return true;
 }
@@ -580,19 +605,19 @@ bool AcceptRequestCommand()
     
     // ID friend
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Raspuns
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
     return true;
 }
@@ -604,19 +629,168 @@ bool RemoveRequestCommand()
     
     // ID friend
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
 
-    bzero(msg, 1000);
-    if(read(0, msg, 1000) < 0)      C_READ_ERROR
-    if(write(sd, msg, 1000) < 0)    C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)      C_READ_ERROR
+    if(write(sd, msg, BUFF_SIZE) < 0)    C_WRITE_ERROR
 
     // Raspuns
     fflush(stdout);
-    bzero(msg, 1000);
-    if(read(sd, msg, 1000) < 0)     C_READ_ERROR
-    if(write(0, msg, 1000) < 0)     C_WRITE_ERROR
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)     C_READ_ERROR
+    if(write(1, msg, BUFF_SIZE) < 0)     C_WRITE_ERROR
+
+    return true;
+}
+
+bool ShowRoomsCommand()
+{
+    return true;
+}
+
+bool JoinRoomCommand()
+{
+    if(!PassTestId())
+        return true;
+
+    // id room
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    // transmitere
+    if(read(0, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+    
+    if(write(sd, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    // raspuns
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR   
+
+    return true;
+}
+
+bool CreateRoomCommand()
+{
+    if(!PassTestId())
+        return true;
+
+    // Cere nume
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    // Transmitere nume
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+    
+    if(write(sd, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    // Raspuns
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    return true;
+}
+
+bool MessageCommand()
+{
+    return true;
+}
+
+bool LeaveRoomCommand()
+{
+    if(!PassTestId())
+        return true;
+
+    // raspuns
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR 
+
+    return true;
+}
+
+bool RefreshCommand()
+{
+    return true;
+}
+
+bool DeleteRoomCommand()
+{
+    if(!PassTestId())
+        return true;
+
+    // Mesaj cu id room
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+    
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    // transmitere id room
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(0, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(sd, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+    
+    // raspuns
+    fflush(stdout);
+    bzero(msg, BUFF_SIZE);
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+    
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
+
+    return true;
+}
+
+bool RoomMembersCommand()
+{
+    if(!PassTestId())
+        return true;
+
+    if(read(sd, msg, BUFF_SIZE) < 0)
+        C_READ_ERROR
+
+    if(write(1, msg, BUFF_SIZE) < 0)
+        C_WRITE_ERROR
 
     return true;
 }

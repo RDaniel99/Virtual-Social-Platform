@@ -1,6 +1,8 @@
 #ifndef H_TEXT
 #define H_TEXT
 
+#define BUFF_SIZE 1500
+
 enum EMesaje
 {
     EMUnknown = 0,
@@ -27,7 +29,16 @@ enum EMesaje
     EMAcceptRequestFail,
     EMAcceptRequestSucces,
     EMRemoveRequestFail,
-    EMRemoveRequestSucces
+    EMRemoveRequestSucces,
+    EMJoinRoomFail,
+    EMJoinRoomSucces,
+    EMCreateRoomFail,
+    EMCreateRoomSucces,
+    EMMessageFail,
+    EMLeaveRoomFail,
+    EMLeaveRoomSucces,
+    EMDeleteRoomFail,
+    EMDeleteRoomSucces
 };
 
 enum EComenzi
@@ -50,7 +61,15 @@ enum EComenzi
     ECShowFriends,
     ECRemoveFriend,
     ECAcceptRequest,
-    ECRemoveRequest
+    ECRemoveRequest,
+    ECShowRooms,
+    ECJoinRoom,
+    ECCreateRoom,
+    ECMessage,
+    ECLeaveRoom,
+    ECRefresh,
+    ECDeleteRoom,
+    ECRoomMembers
 };
 
 void ConvertToMessage(EMesaje mesaj, char *result);
@@ -64,7 +83,7 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 "Mesaj necunoscut\n"
 
 #define T_HELP \
-"Comenzi:\n \
+"Comenzi social media:\n \
 !help           - Afiseaza acest mesaj.\n \
 !quit           - Iesire.\n \
 !register       - Inregistrare utilizator nou.\n \
@@ -78,10 +97,19 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 !editprofile    - Editeaza propriul profil.\n \
 !addfriend      - Adauga un prieten.\n \
 !requests       - Afiseaza cererile de prietenie primite.\n \
-!showfriends    - Afiseaza prietenii.\n \
+!friends        - Afiseaza prietenii.\n \
 !removefriend   - Sterge un prieten.\n \
 !acceptrequest  - Accepta o cerere de prietenie.\n \
-!removerequest  - Sterge o cerere de prietenie.\n"
+!removerequest  - Sterge o cerere de prietenie.\n\n\
+Comenzi chat rooms:\n \
+!showrooms      - Afiseaza camerele de chat.\n \
+!joinroom       - Intra intr-o camera de chat.\n \
+!createroom     - Porneste o camera de chat.\n \
+!message        - Trimite un mesaj catre ceilalti din camera.\n \
+!leaveroom      -.Paraseste camera de chat.\n \
+!refresh        - Refresh la chat.\n \
+!deleteroom     - Sterge o camera de chat.\n \
+!members        - Afiseaza participantii din chat.\n\n"
 
 #define T_QUIT \
 "O zi buna! Va mai asteptam\n"
@@ -137,13 +165,41 @@ void ConvertToMessage(EMesaje mesaj, char *result);
 #define T_REMOVE_REQUEST_SUCCES \
 "Cererea de prietenie a fost stearsa cu succes.\n"
 
-#define T_REMOVE
+#define T_JOIN_ROOM_FAIL \
+"Nu v-ati putut alatura camerei de chat. Camera inexistenta sau sunteti deja intr-o alta camera.\n"
+
+#define T_JOIN_ROOM_SUCCES \
+"V-ati alaturat camerei de chat cu succes!\n"
+
+#define T_CREATE_ROOM_FAIL \
+"Nu ati putut sa incepeti o camera noua de chat. Exista deja una cu acest nume sau sunteti deja intr-o camera.\n"
+
+#define T_CREATE_ROOM_SUCCES \
+"Ati creat o camera de chat cu succes.\n"
+
+#define T_MESSAGE_FAIL \
+"Nu s-a putut transmite mesajul. Nu sunteti intr-o camera de chat.\n"
+
+#define T_LEAVE_ROOM_FAIL \
+"Trebuie sa fiti intr-o camera de chat ca sa puteti iesi.\n"
+
+#define T_LEAVE_ROOM_SUCCES \
+"Ati parasit camera de chat cu succes.\n"
+
+#define T_DELETE_ROOM_FAIL \
+"Camera de chat nu a putut fi stearsa. Nu aveti drepturi / camera nu exista / camera are in continuare membrii.\n"
+
+#define T_DELETE_ROOM_SUCCES \
+"Camera de chat a fost stearsa cu succes.\n"
 
 #define T_LOGIN_NAME \
 "Nume: "
 
 #define T_LOGIN_PASS \
 "Password: "
+
+#define T_ROOM_NAME \
+"Nume room: "
 
 #define T_LOGIN_FAIL \
 "Login esuat. Utilizatorul nu exista sau parola este incorecta.\n"
@@ -202,6 +258,9 @@ postarea nu exista / nu sunteti conectat.\n"
 
 #define T_EDIT_PROFILE_SUCCES \
 "Profilul a fost editat cu succes.\n"
+
+#define T_ROOM_ID \
+"ID Room: "
 
 #endif
 
@@ -329,6 +388,64 @@ printf("[SERVER] Un client a iesit\n");
 #ifdef H_DATABASE
 
 // Mesaje de eroare/informare DB
+
+#define DB_OPEN_MESSAGES_ERROR \
+{\
+printf("[DATABASE] Eroare la open() - tabela Messages"); \
+return false;\
+}
+
+#define DB_CREATE_MESSAGES_ERROR \
+{\
+printf("[DATABASE] Eroare la create table - tabela Messages\n %s\n", err);\
+sqlite3_free(err);\
+sqlite3_close(db);\
+return false;\
+}
+
+#define DB_CREATE_MESSAGES_OK \
+printf("[DATABASE] Tabela Messages creata cu succes\n");
+
+#define DB_DELETE_MESSAGES_ERROR \
+printf("[DATABASE] Eroare la Delete() in Messages\n");
+
+#define DB_SELECT_MESSAGES_ERROR \
+printf("[DATABASE] Eroare la Select() in Messages\n");
+
+#define DB_INSERT_MESSAGES_ERROR \
+printf("[DATABASE] Eroare la Insert() in Messages\n");
+
+#define DB_ROOM_MEMBERS \
+"In total sunt conectati: "
+
+#define DB_OPEN_ROOMS_ERROR \
+{\
+printf("[DATABASE] Eroare la open() - tabela Rooms"); \
+return false;\
+}
+
+#define DB_CREATE_ROOMS_ERROR \
+{\
+printf("[DATABASE] Eroare la create table - tabela Rooms\n %s\n", err);\
+sqlite3_free(err);\
+sqlite3_close(db);\
+return false;\
+}
+
+#define DB_CREATE_ROOMS_OK \
+printf("[DATABASE] Tabela Rooms creata cu succes\n");
+
+#define DB_DELETE_ROOMS_ERROR \
+printf("[DATABASE] Eroare la Delete() Room\n");
+
+#define DB_SELECT_ROOMS_ERROR \
+printf("[DATABASE] Eroare la Select() in Rooms\n");
+
+#define DB_INSERT_ROOMS_ERROR \
+printf("[DATABASE] Eroare la Insert() in Rooms\n");
+
+#define DB_INSERT_ROOMS_OK \
+printf("[DATABASE] Camera noua creata cu succes\n");
 
 #define DB_OPEN_FRIENDSHIPS_ERROR \
 {\

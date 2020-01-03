@@ -1,0 +1,31 @@
+1 Users:
+UserId - INT
+UserName - TEXT
+UserPass - TEXT
+UserAdmin - INT
+UserOnline - INT
+UserPrivacy - INT
+UserRoom - INT
+UserLastMsg - INT
+
+2 Posts:
+PostId - INT
+PostText - TEXT
+OwnerId - INT
+PostVisibility - INT
+
+3 Friendships:
+IdSender - INT
+IdReciever - INT
+TypeFriends - INT
+IsAccepted - INT
+
+4 Rooms:
+RoomId - INT
+RoomName - TEXT
+
+5 Messages:
+MessageId - INT
+RoomId - INT
+IdUserMsg - INT
+Message - TEXT

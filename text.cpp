@@ -33,6 +33,15 @@ void ConvertToMessage(EMesaje mesaj, char *result)
         case EMAcceptRequestSucces:     strcpy(result, T_ACCEPT_REQUEST_SUCCES);    break;
         case EMRemoveRequestFail:       strcpy(result, T_REMOVE_REQUEST_FAIL);      break;
         case EMRemoveRequestSucces:     strcpy(result, T_REMOVE_REQUEST_SUCCES);    break;
+        case EMJoinRoomFail:            strcpy(result, T_JOIN_ROOM_FAIL);           break;
+        case EMJoinRoomSucces:          strcpy(result, T_JOIN_ROOM_SUCCES);         break;
+        case EMCreateRoomFail:          strcpy(result, T_CREATE_ROOM_FAIL);         break;
+        case EMCreateRoomSucces:        strcpy(result, T_CREATE_ROOM_SUCCES);       break;
+        case EMMessageFail:             strcpy(result, T_MESSAGE_FAIL);             break;
+        case EMLeaveRoomFail:           strcpy(result, T_LEAVE_ROOM_FAIL);          break;
+        case EMLeaveRoomSucces:         strcpy(result, T_LEAVE_ROOM_SUCCES);        break;
+        case EMDeleteRoomFail:          strcpy(result, T_DELETE_ROOM_FAIL);         break;
+        case EMDeleteRoomSucces:        strcpy(result, T_DELETE_ROOM_SUCCES);       break;
 
         default:                        strcpy(result, T_UNKNOWN_MESSAGE);          break;
     }
