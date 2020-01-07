@@ -107,7 +107,7 @@ Comenzi chat rooms:\n \
 !joinroom       - Intra intr-o camera de chat.\n \
 !createroom     - Porneste o camera de chat.\n \
 !message        - Trimite un mesaj catre ceilalti din camera.\n \
-!leaveroom      -.Paraseste camera de chat.\n \
+!leaveroom      - Paraseste camera de chat.\n \
 !refresh        - Refresh la chat.\n \
 !deleteroom     - Sterge o camera de chat.\n \
 !members        - Afiseaza participantii din chat.\n\n"

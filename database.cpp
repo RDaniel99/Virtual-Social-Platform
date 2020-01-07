@@ -21,6 +21,7 @@ struct postinfo
     int postId;
     string postText;
     int postAuthor;
+    int postvisibility;
 };
 
 struct friendshipinfo
@@ -246,6 +247,15 @@ bool createDatabases()
 bool updateUser(char *nume, char *pass, int privacy, int userid)
 {
     bool ok = true;
+
+    if(!existsId(userid, 1))
+        return false;
+    
+    bool isEnterNume = (strlen(nume) == 0);
+    bool isEnterPass = (strlen(pass) == 0);
+
+    if(isEnterNume) strcpy(nume, dbUser_Name.c_str());
+    if(isEnterPass) strcpy(pass, dbUser_Password.c_str());
     
     ok = ok & validateName(nume);
 
@@ -485,10 +495,24 @@ bool deleteRoom(int userid, int roomid)
     sql += std::to_string(roomid);
     sql += ";";
 
+    DB_SQL_COMMAND
+
     exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
 
     if(exitCode != SQLITE_OK)
         DB_DELETE_ROOMS_ERROR
+
+    sql = "";
+    sql += "DELETE FROM Messages WHERE RoomId = ";
+    sql += std::to_string(roomid);
+    sql += ";";
+    
+    exitCode = sqlite3_exec(db, sql.c_str(), 0, 0, &err);
+
+    if(exitCode != SQLITE_OK)
+        DB_DELETE_MESSAGES_ERROR
+
+    DB_SQL_COMMAND
 
     sqlite3_close(db);
 
@@ -628,6 +652,7 @@ bool getMembers(int userid, char *msg)
     string ans = "";
     ans += DB_ROOM_MEMBERS;
     ans += std::to_string(db_callbackAns);
+    ans += "\n\n";
 
     strcpy(msg, "");
     strcpy(msg, ans.c_str());
@@ -708,6 +733,9 @@ bool getMessages(int userid, char *msg)
 bool addMessage(int userid, char *text)
 {
     if(!existsId(userid, 1))
+        return false;
+
+    if(strlen(text) == 0)
         return false;
 
     int nxtId = computeNextId(5);
@@ -1167,10 +1195,15 @@ bool addPost(char *postText, int ownerid, int visibility)
 bool updatePost(int postid, char *postText, int ownerid, int visibility)
 {
     bool ok = true;
+    bool isEnterPostText = false;
+    bool isEnterVisibility = false;
 
-    ok = ok & validatePostText(postText);
+    if(strlen(postText) == 0)
+        isEnterPostText = true;
+
+    ok = ok & (validatePostText(postText) || isEnterPostText);
     ok = ok & validateOwnerId(ownerid);
-    ok = ok & validateVisibility(visibility);
+    ok = ok & (validateVisibility(visibility) || isEnterVisibility);
 
     if(!ok)
         return false;
@@ -1184,6 +1217,11 @@ bool updatePost(int postid, char *postText, int ownerid, int visibility)
         if(db_posts[i].postId == postid && db_posts[i].postAuthor == ownerid)
         {
             ok = true;
+            if(isEnterPostText)
+                strcpy(postText, db_posts[i].postText.c_str());
+            if(isEnterVisibility)
+                visibility = db_posts[i].postvisibility;
+
             break;
         }
     }
@@ -1696,6 +1734,7 @@ int callbackCollectPosts(void *NotUsed, int argc, char **argv, char **azColName)
         toAdd.postText = "";
         toAdd.postText += argv[1];
         toAdd.postAuthor = atoi(argv[2]);
+        toAdd.postvisibility = atoi(argv[3]);
 
         db_posts.push_back(toAdd);
     }
@@ -1742,6 +1781,7 @@ int callbackCollectAllPosts(void *NotUsed, int argc, char **argv, char **azColNa
     toAdd.postText = "";
     toAdd.postText += argv[1];
     toAdd.postAuthor = atoi(argv[2]);
+    toAdd.postvisibility = atoi(argv[3]);
 
     db_posts.push_back(toAdd);
 
